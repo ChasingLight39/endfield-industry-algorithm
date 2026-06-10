@@ -1,3 +1,6 @@
+/** 网格单元格像素尺寸，需与 index.css 中的 --grid-size 通过 main.tsx 同步 */
+export const GRID_SIZE = 40;
+
 export const GRID_PRESETS = [
     { label: '次級核心1級 (24x24)', width: 24, height: 24 },
     { label: '次級核心2級 (32x32)', width: 32, height: 32 },

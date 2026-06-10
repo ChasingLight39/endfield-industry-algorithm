@@ -10,10 +10,16 @@ export const createHistorySlice: StateCreator<GameState, [], [], HistorySlice> =
     takeSnapshot: () => {
         const { machines, connections, history } = get();
         const snapshot: HistorySnapshot = { machines, connections };
+        const maxHistory = 50;
+        const past = [...history.past, snapshot];
+        // 超出上限时丢弃最旧的快照
+        if (past.length > maxHistory) {
+            past.splice(0, past.length - maxHistory);
+        }
 
         set({
             history: {
-                past: [...history.past, snapshot],
+                past,
                 future: []
             }
         });

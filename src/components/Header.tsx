@@ -17,7 +17,7 @@ import { ShareModal } from './ShareModal';
 import { useState } from 'react';
 
 export const Header = ({ onSave, onOpen }: HeaderProps) => {
-    const { gridWidth, gridHeight, setGridSize, setUiView } = useGameStore();
+    const { gridWidth, gridHeight, setGridSize, setUiView, setPan, setZoom } = useGameStore();
     const [isShareOpen, setIsShareOpen] = useState(false);
 
     const gridPresetsCollection = createListCollection({
@@ -64,6 +64,7 @@ export const Header = ({ onSave, onOpen }: HeaderProps) => {
                     </Select.Root>
                 </div>
                 <div className="actions">
+                    <IconButton icon="material-symbols:fit-screen" tooltip="重置视图" onClick={() => { setPan({ x: 0, y: 0 }); setZoom(1); }} />
                     <IconButton icon="material-symbols:save" tooltip="保存" onClick={onSave} />
                     <IconButton icon="typcn:home" tooltip="藍圖列表" onClick={onOpen} />
                     <IconButton icon="material-symbols:share" tooltip="分享" onClick={() => setIsShareOpen(true)} />

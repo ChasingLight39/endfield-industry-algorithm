@@ -7,6 +7,7 @@ import { getMachineConfig } from '../config/machines';
 import { useGameStore } from '../store/gameStore';
 import './Machine.scss';
 import { getRotatedDimensions, getRotatedPorts } from '../utils/machineUtils';
+import { GRID_SIZE } from '../config/constants';
 
 interface MachineProps {
     data: PlacedMachine;
@@ -83,30 +84,29 @@ export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPower
     const getPortStyle = useCallback((p: { x: number, y: number, side: 'top' | 'right' | 'bottom' | 'left' }) => {
         const style: React.CSSProperties = {};
 
-        const CELL_SIZE = 40;
-        const GAP = 3;
-        const centerOffset = (CELL_SIZE / 2) - GAP;
-        const axisOffset = -4;
+        const GAP = 3; // .machine-container padding
+        const centerOffset = (GRID_SIZE / 2) - GAP;
+        const axisOffset = -4; // 补偿 3px 内边距 + 3px 边框 + 1.5px 端口边框的视觉偏移
 
         switch (p.side) {
             case 'left':
                 style.left = '-1px';
-                style.top = `${p.y * CELL_SIZE + centerOffset + axisOffset}px`;
+                style.top = `${p.y * GRID_SIZE + centerOffset + axisOffset}px`;
                 style.transform = 'translate(0, -50%)';
                 break;
             case 'right':
                 style.right = '-0.5px';
-                style.top = `${p.y * CELL_SIZE + centerOffset + axisOffset}px`;
+                style.top = `${p.y * GRID_SIZE + centerOffset + axisOffset}px`;
                 style.transform = 'translate(0, -50%)';
                 break;
             case 'top':
                 style.top = '-1px';
-                style.left = `${p.x * CELL_SIZE + centerOffset + axisOffset}px`;
+                style.left = `${p.x * GRID_SIZE + centerOffset + axisOffset}px`;
                 style.transform = 'translate(-50%, 0)';
                 break;
             case 'bottom':
                 style.bottom = '-0.5px';
-                style.left = `${p.x * CELL_SIZE + centerOffset + axisOffset}px`;
+                style.left = `${p.x * GRID_SIZE + centerOffset + axisOffset}px`;
                 style.transform = 'translate(-50%, 0)';
                 break;
         }

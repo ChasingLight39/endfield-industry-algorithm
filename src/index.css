@@ -7,7 +7,7 @@
 }
 
 :root {
-  --grid-size: 40px;
+  --grid-size: 40px; /* 由 main.tsx 在启动时从 constants.ts GRID_SIZE 同步 */
   --gray-light: #e5e1e1;
   --gray: #c4c1c1;
   --gray-dark: #5f5d5d;

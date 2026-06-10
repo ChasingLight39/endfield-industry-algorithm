@@ -8,9 +8,20 @@ import classNames from 'classnames';
 import './Grid.scss';
 import { checkCollision } from '../utils/gridUtils';
 import { getRotatedDimensions, getRotatedPorts, buildPowerGrid } from '../utils/machineUtils';
-
-const GRID_SIZE = 40; // 需与 CSS 中的 --grid-size 保持一致
+import { GRID_SIZE } from '../config/constants';
 const EXTEND = 0.45;
+
+/** 限制平移范围，防止无限滚入空白区域 */
+const clampPan = (pan: Point, gridW: number, gridH: number): Point => {
+    const maxX = gridW * GRID_SIZE * 2;
+    const maxY = gridH * GRID_SIZE * 2;
+    const minX = -gridW * GRID_SIZE;
+    const minY = -gridH * GRID_SIZE;
+    return {
+        x: Math.max(minX, Math.min(maxX, pan.x)),
+        y: Math.max(minY, Math.min(maxY, pan.y)),
+    };
+};
 
 /** 将路径端点沿方向延伸，使连线视觉上深入机器内部 */
 const extendPoint = (p: Point, dir: number, amt: number): Point => {
@@ -150,7 +161,7 @@ export const Grid = () => {
         const newPanY = mouseY - worldY * newZoom;
 
         s.setZoom(newZoom);
-        s.setPan({ x: newPanX, y: newPanY });
+        s.setPan(clampPan({ x: newPanX, y: newPanY }, s.gridWidth, s.gridHeight));
     }, []);
 
     const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -158,10 +169,10 @@ export const Grid = () => {
             const deltaX = e.clientX - lastMousePos.current.x;
             const deltaY = e.clientY - lastMousePos.current.y;
             const s = useGameStore.getState();
-            s.setPan({
+            s.setPan(clampPan({
                 x: s.pan.x + deltaX,
                 y: s.pan.y + deltaY
-            });
+            }, s.gridWidth, s.gridHeight));
             lastMousePos.current = { x: e.clientX, y: e.clientY };
             return;
         }

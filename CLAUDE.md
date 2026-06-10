@@ -270,18 +270,18 @@ const sideToDir: Record<Side, Direction> = { top: 0, right: 1, bottom: 2, left: 
 
 ## 机器配置完整清单
 
-`config/machines.ts` 定义 24 种机器，`Toolbar.tsx` 的 `MACHINE_GROUPS` 控制工具栏可见性。
+`config/machines.ts` 定义 43 种机器，`Toolbar.tsx` 的 `MACHINE_GROUPS` 按定义顺序分组展示。
 
-| 分类 | Tab | 已配置 | **缺失(定义了但工具栏中不可见)** |
-|------|-----|--------|----------------------------------|
-| 核心 | core | pco | - |
-| 物流 | logistics | lbr, pbr, spl, mrg, iip | **psp, pmg, pip, cpe, cpx, mce, mcx** (管道分流/汇流/入口/暗管4种) |
-| 仓储存取 | storage | pst, wsp, wpp, wss, wsl | **ltk** (储液罐) |
-| 基础生产 | production | ref, cru, asm, mol, shv, pln | **rfl, pll, wwt** (液体精炼/液体种植/废水处理) |
-| 合成制造 | processing | cas, fil, sel, grn, rea, tyh | **fll, era, pur, dis** (液体灌装/扩容反应/提纯/拆解) |
-| 电力 | power | sup, thp | **xrs, rpt, xrr** (息壤供电桩/中继器/息壤中继器) |
+| 分类 | Tab | 数量 | 机器 |
+|------|-----|------|------|
+| 核心 | core | 1 | pco |
+| 物流 | logistics | 12 | lbr, spl, mrg, iip, pbr, psp, pmg, pip, cpe, cpx, mce, mcx |
+| 仓储存取 | storage | 6 | pst, wsp, wpp, ltk, wss, wsl |
+| 基础生产 | production | 9 | ref, rfl, cru, asm, mol, shv, pln, pll, wwt |
+| 合成制造 | processing | 10 | cas, fil, fll, sel, grn, rea, era, tyh, pur, dis |
+| 电力 | power | 5 | sup, xrs, rpt, xrr, thp |
 
-**总计：15 种机器在 `machines.ts` 中定义但无法从工具栏选择。** 这些机器可能通过分享链接或蓝图加载进入游戏，但用户无法手动放置。
+**图标覆盖**：43 台机器中仅 24 台有 `.webp` 图标，无图标时 `<img onError>` 自动隐藏仅显示文字。
 
 ## 已知问题（按严重程度排序）
 
@@ -318,18 +318,18 @@ const sideToDir: Record<Side, Direction> = { top: 0, right: 1, bottom: 2, left: 
 
 10. ~~**无 Error Boundary**~~ ✅ **已修复 (2026-06-10)** — 添加 `ErrorBoundary` 类组件，包裹所有路由页面，捕获渲染错误并显示回退 UI
 
-11. **15 种机器定义但工具栏不可见** — `MACHINE_GROUPS` 遗漏了液体变体、暗管、储液罐、进阶电力设备等
+11. ~~**15 种机器定义但工具栏不可见**~~ ✅ **已修复 (2026-06-11)** — `MACHINE_GROUPS` 补全全部 43 台机器，无图标时自动显示文字
 
 ### 🟢 低优先级
 
-12. **commitBatchMove 未检查连线碰撞** — `selectionSlice.ts` 仅调用 `checkCollision(rect, machines)`，漏检已有连线路径
-13. **网格尺寸切换不验证越界** — 超出新边界的机器不可见但仍在 state 中
-14. **history 快照无容量上限** — 长期编辑可能累积大量内存
-15. **平移无约束** — 无上下限、无"重置视图"按钮
-16. **重复材料图标** — `materials.ts` 中 4 种液体材料共用 `icon: 44`
-17. **端口偏移硬编码** — `Machine.tsx` `axisOffset = -4`
-18. **GRID_SIZE 双重硬编码** — `Grid.tsx` 和 `index.css` 需手动同步
-19. **ShareModal 截图时机不可靠** — `ShareModal.tsx` 100ms setTimeout 无保证DOM已稳定
+12. ~~**commitBatchMove 未检查连线碰撞**~~ ✅ **已修复 (2026-06-11)** — 增加机器占用 + 异类型连线 + 同类型拐弯点三重检测
+13. ~~**网格尺寸切换不验证越界**~~ ✅ **已修复 (2026-06-11)** — `setGridSize` 自动清除越界机器及关联连线，`takeSnapshot` 先于清除可撤销恢复
+14. ~~**history 快照无容量上限**~~ ✅ **已修复 (2026-06-11)** — 上限 50 步，超出丢弃最旧快照
+15. ~~**平移无约束 + 无重置按钮**~~ ✅ **已修复 (2026-06-11)** — 添加 `clampPan` 限制平移范围（-1~+2 倍网格），Header 添加重置视图按钮
+16. **重复材料图标** — `materials.ts` 中 4 种液体材料共用 `icon: 44`（需游戏数据人工对照）
+17. ~~**端口偏移硬编码**~~ ✅ **已修复 (2026-06-11)** — `Machine.tsx` 改用 `GRID_SIZE` 常量 + 注释说明偏移来源
+18. ~~**GRID_SIZE 双重硬编码**~~ ✅ **已修复 (2026-06-11)** — 提取到 `constants.ts`，`main.tsx` 启动时同步到 CSS 变量 `--grid-size`
+19. ~~**ShareModal 截图时机不可靠**~~ ✅ **已修复 (2026-06-11)** — `setTimeout(100)` → `requestAnimationFrame`
 20. **BlueprintList 删除后重新读取 localStorage** — `BlueprintList.tsx` 调用 `getBlueprints()` 而非更新本地状态
 
 ## 下一步行动计划
@@ -350,17 +350,17 @@ const sideToDir: Record<Side, Direction> = { top: 0, right: 1, bottom: 2, left: 
 - [x] **添加测试**：38 个 vitest 测试覆盖 `getBoundingBox`/`getRotatedDimensions`/`getRotatedPorts`/`routeManhattan`/`getCornerPoints`/`dirFromPoints`/`splitConnectionAt`
 - [x] **添加 Error Boundary 组件**：`src/components/ErrorBoundary.tsx`，包裹所有路由页面
 
-### 🟢 Sprint 3：功能修复 + 体验（预计 2-3 小时）
+### 🟢 Sprint 3：功能修复 + 体验 ✅ **已完成 (2026-06-11)**
 
-- [ ] **补全 `MACHINE_GROUPS`**：将 15 种缺失机器加入对应分类标签页
-- [ ] **`commitBatchMove`** 增加连线路径碰撞检测
-- [ ] **网格尺寸切换时** 检测并警告/清除越界机器
-- [ ] **history 快照** 设置上限（如 50 步）
-- [ ] 添加视图重置按钮 + 平移范围限制
-- [ ] 修复重复材料图标（为 icon:44 的 4 种液体分配不同图标）
-- [ ] GRID_SIZE 改为从 CSS 变量读取或提取为单一常量文件
-- [ ] `axisOffset` 改为 CSS 计算值
-- [ ] `ShareModal` 截图改用 `requestAnimationFrame` 替代 `setTimeout(100)`
+- [x] **补全 `MACHINE_GROUPS`**：43 台机器全部可见，按 `machines.ts` 定义顺序排列；无图标时 `onError` 隐藏裂图显示文字
+- [x] **`commitBatchMove`** 增加连线路径碰撞检测（机器占用 + 异类型连线 + 同类型拐弯点三重检测）
+- [x] **网格尺寸切换时** 自动清除越界机器及关联连线（takeSnapshot 先于清除，可撤销恢复）
+- [x] **history 快照** 设置上限 50 步
+- [x] 添加视图重置按钮（Header fit-screen 图标）+ 平移范围限制（`clampPan`：-1~+2 倍网格范围）
+- [ ] 修复重复材料图标 — **跳过**：需游戏数据人工对照，不可猜测
+- [x] GRID_SIZE 提取到 `constants.ts`，`main.tsx` 启动时同步到 CSS 变量 `--grid-size`
+- [x] `axisOffset` 改用 `GRID_SIZE` 常量 + 注释说明偏移来源（补偿 padding+border+port border）
+- [x] `ShareModal` 截图 `setTimeout(100)` → `requestAnimationFrame`
 
 ## 部署
 

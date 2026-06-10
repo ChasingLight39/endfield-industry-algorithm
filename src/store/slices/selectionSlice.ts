@@ -3,7 +3,7 @@ import type { SelectionSlice, GameState } from './types';
 import type { PlacedMachine, Connection } from '../../types';
 import { GameMode } from '../../types';
 import { MACHINES } from '../../config/machines';
-import { checkCollision, getMachinePortCheckPositions, getBoundingBox } from '../../utils/gridUtils';
+import { checkCollision, getMachinePortCheckPositions, getBoundingBox, buildOccupancyGrid, getCornerPoints } from '../../utils/gridUtils';
 import { getRotatedDimensions } from '../../utils/machineUtils';
 
 export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlice> = (set, get) => ({
@@ -195,6 +195,57 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
             if (checkCollision(rect, machines)) {
                 collision = true;
                 break;
+            }
+        }
+
+        // 连线路径碰撞检测（机器占用 + 异类型连线 + 同类型拐弯点）
+        if (!collision) {
+            const machineGrid = buildOccupancyGrid(machines, gridWidth, gridHeight);
+
+            // 按 portType 分组构建已有连线占用网格
+            const connGridByType = new Map<string, Uint8Array>();
+            const allConnGrid = new Uint8Array(gridWidth * gridHeight);
+            for (const c of connections) {
+                let g = connGridByType.get(c.portType);
+                if (!g) { g = new Uint8Array(gridWidth * gridHeight); connGridByType.set(c.portType, g); }
+                for (const p of c.path) {
+                    if (p.x >= 0 && p.x < gridWidth && p.y >= 0 && p.y < gridHeight) {
+                        g[p.y * gridWidth + p.x] = 1;
+                        allConnGrid[p.y * gridWidth + p.x] = 1;
+                    }
+                }
+            }
+
+            // 标记已有连线的拐弯点（同类型也不可重叠）
+            const cornerGrid = new Uint8Array(gridWidth * gridHeight);
+            for (const c of connections) {
+                for (const cp of getCornerPoints(c.path, c.tailFacing, c.headFacing)) {
+                    if (cp.x >= 0 && cp.x < gridWidth && cp.y >= 0 && cp.y < gridHeight) {
+                        cornerGrid[cp.y * gridWidth + cp.x] = 1;
+                    }
+                }
+            }
+
+            const placedConns = movingConnectionsSnapshot.map(c => ({
+                ...c,
+                path: c.path.map(p => ({ x: p.x + offsetX, y: p.y + offsetY }))
+            }));
+
+            connCheck: for (const conn of placedConns) {
+                const sameTypeGrid = connGridByType.get(conn.portType);
+                for (const p of conn.path) {
+                    const idx = p.y * gridWidth + p.x;
+                    if (p.x < 0 || p.y < 0 || p.x >= gridWidth || p.y >= gridHeight) { collision = true; break connCheck; }
+                    if (machineGrid[idx]) { collision = true; break connCheck; }
+                    if (allConnGrid[idx] && !(sameTypeGrid?.[idx])) { collision = true; break connCheck; }
+                    if (sameTypeGrid?.[idx] && cornerGrid[idx]) { collision = true; break connCheck; }
+                }
+                // 移动连线自身的拐弯点也不能落在已有同类型连线上
+                for (const cp of getCornerPoints(conn.path, conn.tailFacing, conn.headFacing)) {
+                    if (cp.x >= 0 && cp.x < gridWidth && cp.y >= 0 && cp.y < gridHeight) {
+                        if (sameTypeGrid?.[cp.y * gridWidth + cp.x]) { collision = true; break connCheck; }
+                    }
+                }
             }
         }
 

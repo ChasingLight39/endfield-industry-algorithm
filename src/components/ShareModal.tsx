@@ -53,13 +53,12 @@ export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
             const url = generateShareUrl(data);
             setShareLink(url);
 
-            // 2. 生成截圖
-            // 等待 UI 穩定？
-            setTimeout(async () => {
+            // 2. 生成截圖 — 等待下一帧确保 DOM 稳定
+            requestAnimationFrame(async () => {
                 const img = await captureBlueprintScreenshot();
                 setImageUrl(img);
                 setIsGenerating(false);
-            }, 100);
+            });
 
         } catch (e) {
             console.error(e);

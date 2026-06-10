@@ -17,12 +17,30 @@ const TABS = [
 ];
 
 const MACHINE_GROUPS: Record<string, string[]> = {
-    core: ['pco' /* protocol-core */],
-    logistics: ['lbr' /* logistics-bridge */, 'pbr' /* pipe-bridge */, 'spl' /* splitter */, 'mrg' /* merger */, 'iip' /* item-input-port */],
-    storage: ['pst' /* protocol-storage */, 'wsp' /* warehouse-storage-port */, 'wpp' /* warehouse-pickup-port */, 'wss' /* warehouse-storage-pickup-line-segment */, 'wsl' /* warehouse-storage-pickup-line-source-pile */],
-    production: ['ref' /* refinery */, 'cru' /* crusher */, 'asm' /* assembler */, 'mol' /* molder */, 'shv' /* seedHarvester */, 'pln' /* planter */],
-    processing: ['cas' /* component-assembler */, 'fil' /* filler */, 'sel' /* sealer */, 'grn' /* grinder */, 'rea' /* reactor */, 'tyh' /* tian-you-hong-furnace */],
-    power: ['sup' /* supply-pole */, 'thp' /* thermal-pool */],
+    core: ['pco' /* 协议核心 */],
+    logistics: [
+        'lbr' /* 物流桥 */, 'spl' /* 分流器 */, 'mrg' /* 汇流器 */, 'iip' /* 物品准入口 */,
+        'pbr' /* 管道桥 */, 'psp' /* 管道分流器 */, 'pmg' /* 管道汇流器 */, 'pip' /* 管道准入口 */,
+        'cpe' /* 暗管入口 */, 'cpx' /* 暗管出口 */, 'mce' /* 多口暗管入口 */, 'mcx' /* 多口暗管出口 */,
+    ],
+    storage: [
+        'pst' /* 协议储存箱 */, 'wsp' /* 仓库存货口 */, 'wpp' /* 仓库取货口 */,
+        'ltk' /* 储液罐 */, 'wss' /* 仓库存取线基段 */, 'wsl' /* 仓库存取线源桩 */,
+    ],
+    production: [
+        'ref' /* 精炼炉 */, 'rfl' /* 精炼炉（液体） */, 'cru' /* 粉碎机 */,
+        'asm' /* 配件机 */, 'mol' /* 塑形机 */, 'shv' /* 采种机 */,
+        'pln' /* 种植机 */, 'pll' /* 种植机（液体） */, 'wwt' /* 废水处理机 */,
+    ],
+    processing: [
+        'cas' /* 装备原件机 */, 'fil' /* 灌装机 */, 'fll' /* 灌装机（液体） */,
+        'sel' /* 封装机 */, 'grn' /* 研磨机 */, 'rea' /* 反应池 */,
+        'era' /* 扩容反应池 */, 'tyh' /* 天有洪炉 */, 'pur' /* 提纯机 */, 'dis' /* 拆解机 */,
+    ],
+    power: [
+        'sup' /* 供电桩 */, 'xrs' /* 息壤供电桩 */, 'rpt' /* 中继器 */,
+        'xrr' /* 息壤中继器 */, 'thp' /* 热能池 */,
+    ],
 };
 
 export const Toolbar = () => {
@@ -104,6 +122,7 @@ export const Toolbar = () => {
                                     className="icon"
                                     src={new URL(`../assets/machines/${m.id}.webp`, import.meta.url).href}
                                     alt={m.name}
+                                    onError={(e) => { e.currentTarget.style.display = 'none' }}
                                 />
                                 <span>{m.name}</span>
                             </button>
