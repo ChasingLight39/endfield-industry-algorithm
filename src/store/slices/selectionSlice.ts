@@ -3,7 +3,7 @@ import type { SelectionSlice, GameState } from './types';
 import type { PlacedMachine, Connection } from '../../types';
 import { GameMode } from '../../types';
 import { MACHINES } from '../../config/machines';
-import { checkCollision, getMachinePortCheckPositions } from '../../utils/gridUtils';
+import { checkCollision, getMachinePortCheckPositions, getBoundingBox } from '../../utils/gridUtils';
 import { getRotatedDimensions } from '../../utils/machineUtils';
 
 export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlice> = (set, get) => ({
@@ -112,36 +112,14 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
 
         if (movingMachines.length === 0 && movingConnections.length === 0) return;
 
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-        movingMachines.forEach(m => {
-            const config = MACHINES.find(c => c.id === m.machineId);
-            if (config) {
-                const { width, height } = getRotatedDimensions(config.width, config.height, m.rotation);
-                minX = Math.min(minX, m.x);
-                minY = Math.min(minY, m.y);
-                maxX = Math.max(maxX, m.x + width);
-                maxY = Math.max(maxY, m.y + height);
-            }
-        });
-
-        movingConnections.forEach(c => {
-            c.path.forEach(p => {
-                minX = Math.min(minX, p.x);
-                minY = Math.min(minY, p.y);
-                maxX = Math.max(maxX, p.x + 1);
-                maxY = Math.max(maxY, p.y + 1);
-            });
-        });
-
-        const anchor = { x: minX, y: minY };
+        const anchor = getBoundingBox(movingMachines, movingConnections);
 
         const remainingMachines = machines.filter(m => !selectedMachineIds.includes(m.id));
         const remainingConnections = connections.filter(c => !selectedConnectionIds.includes(c.id));
 
         set({
             mode: GameMode.MOVE_SELECTION,
-            moveAnchor: anchor,
+            moveAnchor: { x: anchor.minX, y: anchor.minY },
             movingMachinesSnapshot: movingMachines,
             movingConnectionsSnapshot: movingConnections,
             machines: remainingMachines,
@@ -161,29 +139,7 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
 
         if (sourceMachines.length === 0 && sourceConnections.length === 0) return;
 
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-        sourceMachines.forEach(m => {
-            const config = MACHINES.find(c => c.id === m.machineId);
-            if (config) {
-                const { width, height } = getRotatedDimensions(config.width, config.height, m.rotation);
-                minX = Math.min(minX, m.x);
-                minY = Math.min(minY, m.y);
-                maxX = Math.max(maxX, m.x + width);
-                maxY = Math.max(maxY, m.y + height);
-            }
-        });
-
-        sourceConnections.forEach(c => {
-            c.path.forEach(p => {
-                minX = Math.min(minX, p.x);
-                minY = Math.min(minY, p.y);
-                maxX = Math.max(maxX, p.x + 1);
-                maxY = Math.max(maxY, p.y + 1);
-            });
-        });
-
-        const anchor = { x: minX, y: minY };
+        const anchor = getBoundingBox(sourceMachines, sourceConnections);
 
         const idMap: Record<string, string> = {};
 
@@ -201,7 +157,7 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
 
         set({
             mode: GameMode.MOVE_SELECTION,
-            moveAnchor: anchor,
+            moveAnchor: { x: anchor.minX, y: anchor.minY },
             movingMachinesSnapshot: newMachines,
             movingConnectionsSnapshot: newConnections,
             selectedMachineIds: [],

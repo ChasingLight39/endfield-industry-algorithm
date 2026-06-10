@@ -306,21 +306,17 @@ const sideToDir: Record<Side, Direction> = { top: 0, right: 1, bottom: 2, left: 
 
 ### 🟡 中优先级
 
-5. **包围盒计算重复 7 处**
-   - `App.tsx` extractSelectionData
-   - `selectionSlice.ts` startBatchMove / startCopySelection
-   - `blueprintSlice.ts` startInsertBlueprint / startInsertBlueprintOnNewMap
-   - `gridUtils.ts` calculateContentDimensions
-   - `shareUtils.ts` encode
+5. ~~**包围盒计算重复 7 处**~~ ✅ **已修复 (2026-06-10)**
+   - 提取 `getBoundingBox()` 到 `gridUtils.ts`，替换全部 7 处重复（App.tsx, selectionSlice ×2, blueprintSlice ×2, gridUtils, shareUtils）
 
 6. ~~**extendPoint 函数重复 3 次**~~ ✅ **已修复 (2026-06-10)** — 提取为模块级 `extendPoint()` + `pathToPoints()`，3 处 SVG 渲染统一复用
 7. ~~**SVG polyline 渲染逻辑重复 3 次**~~ ✅ **已修复 (2026-06-10)** — 通过 `pathToPoints()` 统一
 
-8. **commitWiring 单体函数过大** — `wiringSlice.ts` 共 110 行，含交叉检测+桥生成+连线分割+状态合并，难以测试和调试
+8. ~~**commitWiring 单体函数过大**~~ 🟡 **部分修复 (2026-06-10)** — `splitConnectionAt` 已提取为纯函数移至 `gridUtils.ts`，commitWiring 主体仍较大
 
-9. **零测试** — 无测试依赖、无测试文件。`routeManhattan`、`splitConnectionAt`、`getRotatedPorts`、旋转数学均为纯函数但无覆盖
+9. ~~**零测试**~~ ✅ **已修复 (2026-06-10)** — 添加 vitest，38 个测试覆盖 `getBoundingBox`/`getRotatedDimensions`/`getRotatedPorts`/`routeManhattan`/`getCornerPoints`/`dirFromPoints`/`splitConnectionAt`
 
-10. **无 Error Boundary** — 任何组件崩溃即白屏
+10. ~~**无 Error Boundary**~~ ✅ **已修复 (2026-06-10)** — 添加 `ErrorBoundary` 类组件，包裹所有路由页面，捕获渲染错误并显示回退 UI
 
 11. **15 种机器定义但工具栏不可见** — `MACHINE_GROUPS` 遗漏了液体变体、暗管、储液罐、进阶电力设备等
 
@@ -346,13 +342,13 @@ const sideToDir: Record<Side, Direction> = { top: 0, right: 1, bottom: 2, left: 
 - [x] **App.tsx**：键盘 effect 依赖精简为稳定引用 + `handleTriggerSaveRef` 模式
 - [x] **Grid.tsx**：全部事件处理器 useCallback + useGameStore.getState() 读取最新状态
 
-### 🟡 Sprint 2：消除重复、补测试（预计 2-3 小时）
+### 🟡 Sprint 2：消除重复、补测试 ✅ **已完成 (2026-06-10)**
 
-- [ ] **提取 `getBoundingBox(machines, connections)`** 到 `gridUtils.ts`，替换全部 7 处重复
-- [ ] **提取 `extendPoint`** 到独立工具函数
-- [ ] **提取 `<ConnectionSVG>` 组件**，统一 3 处 SVG polyline 渲染逻辑
-- [ ] **添加测试**：`routeManhattan`(边界/碰撞/退化), `splitConnectionAt`(头/中/尾分割), `getRotatedPorts`(各旋转角度)
-- [ ] **添加 Error Boundary 组件**
+- [x] **提取 `getBoundingBox(machines, connections)`** 到 `gridUtils.ts`，替换全部 7 处重复
+- [x] **提取 `extendPoint`** 到独立工具函数（Sprint 1 顺手完成）
+- [x] **提取 `<ConnectionSVG>` 组件**，统一 3 处 SVG polyline 渲染逻辑（Sprint 1 通过 `pathToPoints()` 完成）
+- [x] **添加测试**：38 个 vitest 测试覆盖 `getBoundingBox`/`getRotatedDimensions`/`getRotatedPorts`/`routeManhattan`/`getCornerPoints`/`dirFromPoints`/`splitConnectionAt`
+- [x] **添加 Error Boundary 组件**：`src/components/ErrorBoundary.tsx`，包裹所有路由页面
 
 ### 🟢 Sprint 3：功能修复 + 体验（预计 2-3 小时）
 

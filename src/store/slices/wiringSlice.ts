@@ -3,30 +3,8 @@ import type { WiringSlice, GameState } from './types';
 import type { Connection, Point, Direction, PlacedMachine } from '../../types';
 import { sideToDir } from '../../types';
 import { MACHINES } from '../../config/machines';
-import { findPath, getVectorFromSide, dirFromPoints } from '../../utils/gridUtils';
+import { findPath, getVectorFromSide, splitConnectionAt } from '../../utils/gridUtils';
 import { getRotatedPorts, getRotatedDimensions } from '../../utils/machineUtils';
-
-/** 在指定點分割連線，返回子連線陣列 (0~2 個)，分割點 (橋位) 不包含在子路徑中 */
-const splitConnectionAt = (conn: Connection, point: Point): Connection[] => {
-    const idx = conn.path.findIndex(p => p.x === point.x && p.y === point.y);
-    if (idx === -1) return [conn];
-
-    const parts: Connection[] = [];
-
-    if (idx > 0) {
-        const subPath = conn.path.slice(0, idx);
-        const hf = dirFromPoints(conn.path[idx - 1], conn.path[idx]);
-        parts.push({ ...conn, id: crypto.randomUUID(), path: subPath, headFacing: hf });
-    }
-
-    if (idx < conn.path.length - 1) {
-        const subPath = conn.path.slice(idx + 1);
-        const tf = dirFromPoints(conn.path[idx], conn.path[idx + 1]);
-        parts.push({ ...conn, id: crypto.randomUUID(), path: subPath, tailFacing: tf });
-    }
-
-    return parts;
-};
 
 export const createWiringSlice: StateCreator<GameState, [], [], WiringSlice> = (set, get) => ({
     connections: [],

@@ -1,4 +1,47 @@
 import type { Point, PlacedMachine, Connection, Direction, PortType } from '../types';
+
+export interface BoundingBox {
+    minX: number; minY: number;
+    maxX: number; maxY: number;
+    width: number; height: number;
+}
+
+/** 计算一组机器和连线的最小包围盒 */
+export const getBoundingBox = (
+    machines: PlacedMachine[],
+    connections: { path: Point[] }[]
+): BoundingBox => {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+    for (const m of machines) {
+        const rect = getMachineRect(m);
+        if (rect) {
+            minX = Math.min(minX, rect.x);
+            minY = Math.min(minY, rect.y);
+            maxX = Math.max(maxX, rect.x + rect.w);
+            maxY = Math.max(maxY, rect.y + rect.h);
+        }
+    }
+
+    for (const c of connections) {
+        for (const p of c.path) {
+            minX = Math.min(minX, p.x);
+            minY = Math.min(minY, p.y);
+            maxX = Math.max(maxX, p.x + 1);
+            maxY = Math.max(maxY, p.y + 1);
+        }
+    }
+
+    if (!isFinite(minX)) {
+        return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
+    }
+
+    return {
+        minX, minY, maxX, maxY,
+        width: maxX - minX,
+        height: maxY - minY
+    };
+};
 import { sideToDir } from '../types';
 import { MACHINES } from '../config/machines';
 import { getRotatedDimensions, getRotatedPorts } from './machineUtils';
@@ -94,7 +137,7 @@ export const getVectorFromSide = (side: 'top' | 'right' | 'bottom' | 'left'): Po
 };
 
 /** 8 分區曼哈頓路由: L 形直角折線，遇障礙自動換另一條路 */
-const routeManhattan = (
+export const routeManhattan = (
     start: Point,
     end: Point,
     grid: Uint8Array,
@@ -238,7 +281,7 @@ export const findPath = (
  * entryDir: 進入 fullPath[0] 的方向, undefined 表示未知
  * exitDir:  離開 fullPath[last] 的方向, undefined 表示未知
  */
-const getCornerPoints = (
+export const getCornerPoints = (
     fullPath: Point[],
     entryDir: Direction | undefined,
     exitDir: Direction | undefined
@@ -294,30 +337,28 @@ export const getMachinePortCheckPositions = (machine: PlacedMachine): Point[] =>
 };
 
 export const calculateContentDimensions = (machines: PlacedMachine[], connections: { path: Point[] }[]) => {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    const bb = getBoundingBox(machines, connections);
+    return { width: bb.width, height: bb.height };
+};
 
-    if (machines.length === 0 && connections.length === 0) return { width: 0, height: 0 };
+/** 在指定點分割連線，返回子連線陣列 (0~2 個)，分割點不包含在子路徑中 */
+export const splitConnectionAt = (conn: Connection, point: Point): Connection[] => {
+    const idx = conn.path.findIndex(p => p.x === point.x && p.y === point.y);
+    if (idx === -1) return [conn];
 
-    machines.forEach(m => {
-        const rect = getMachineRect(m);
-        if (rect) {
-            minX = Math.min(minX, rect.x);
-            minY = Math.min(minY, rect.y);
-            maxX = Math.max(maxX, rect.x + rect.w);
-            maxY = Math.max(maxY, rect.y + rect.h);
-        }
-    });
+    const parts: Connection[] = [];
 
-    connections.forEach(c => {
-        c.path.forEach(p => {
-            minX = Math.min(minX, p.x);
-            minY = Math.min(minY, p.y);
-            maxX = Math.max(maxX, p.x + 1);
-            maxY = Math.max(maxY, p.y + 1);
-        });
-    });
+    if (idx > 0) {
+        const subPath = conn.path.slice(0, idx);
+        const hf = dirFromPoints(conn.path[idx - 1], conn.path[idx]);
+        parts.push({ ...conn, id: crypto.randomUUID(), path: subPath, headFacing: hf });
+    }
 
-    if (minX === Infinity || minY === Infinity) return { width: 0, height: 0 };
+    if (idx < conn.path.length - 1) {
+        const subPath = conn.path.slice(idx + 1);
+        const tf = dirFromPoints(conn.path[idx], conn.path[idx + 1]);
+        parts.push({ ...conn, id: crypto.randomUUID(), path: subPath, tailFacing: tf });
+    }
 
-    return { width: maxX - minX, height: maxY - minY };
+    return parts;
 };

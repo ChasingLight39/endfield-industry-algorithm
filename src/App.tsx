@@ -3,18 +3,17 @@ import { Toolbar } from './components/Toolbar';
 import { Header } from './components/Header';
 import { LoadingScreen } from './components/LoadingScreen';
 import { OperationHints } from './components/OperationHints';
-import { calculateContentDimensions } from './utils/gridUtils';
+import { calculateContentDimensions, getBoundingBox } from './utils/gridUtils';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useGameStore } from './store/gameStore';
 import { BlueprintList } from './components/BlueprintList';
 
 import { About } from './components/About';
 import { SaveDialog } from './components/SaveDialog';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { saveBlueprint, type Blueprint, getLastBlueprintId, loadBlueprint, setLastBlueprintId } from './utils/storage';
 import { Toaster, Toast } from '@chakra-ui/react';
 import { toaster } from './utils/toaster';
-import { MACHINES } from './config/machines';
-import { getRotatedDimensions } from './utils/machineUtils';
 import './App.css';
 import { parseShareUrl } from './utils/shareUtils';
 
@@ -88,30 +87,11 @@ export default function App() {
 
     if (selectedMachines.length === 0 && selectedConnections.length === 0) return null;
 
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    const bb = getBoundingBox(selectedMachines, selectedConnections);
+    if (bb.width === 0 && bb.height === 0) return null;
 
-    selectedMachines.forEach(m => {
-      const config = MACHINES.find(c => c.id === m.machineId);
-      if (config) {
-        const { width, height } = getRotatedDimensions(config.width, config.height, m.rotation);
-        minX = Math.min(minX, m.x);
-        minY = Math.min(minY, m.y);
-        maxX = Math.max(maxX, m.x + width);
-        maxY = Math.max(maxY, m.y + height);
-      }
-    });
-
-    selectedConnections.forEach(c => {
-      c.path.forEach(p => {
-        minX = Math.min(minX, p.x);
-        minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x + 1);
-        maxY = Math.max(maxY, p.y + 1);
-      });
-    });
-
-    const offsetX = minX;
-    const offsetY = minY;
+    const offsetX = bb.minX;
+    const offsetY = bb.minY;
 
     const newMachines = selectedMachines.map(m => ({
       ...m,
@@ -126,14 +106,11 @@ export default function App() {
       path: c.path.map(p => ({ x: p.x - offsetX, y: p.y - offsetY }))
     }));
 
-    const width = maxX - minX;
-    const height = maxY - minY;
-
     return {
       machines: newMachines,
       connections: newConnections,
-      actualWidth: width,
-      actualHeight: height
+      actualWidth: bb.width,
+      actualHeight: bb.height
     };
   }, [machines, connections, selectedMachineIds, selectedConnectionIds]);
 
@@ -265,41 +242,43 @@ export default function App() {
         )}
       </Toaster>
 
-      {isLoading && (
-        <LoadingScreen onComplete={() => setIsLoading(false)} />
-      )}
+      <ErrorBoundary>
+        {isLoading && (
+          <LoadingScreen onComplete={() => setIsLoading(false)} />
+        )}
 
-      {uiView === 'list' && (
-        <BlueprintList
-          onSelect={handleLoadBlueprint}
-          onCreateNew={handleCreateNew}
-          mode={blueprintListMode}
-        />
-      )}
-
-      {uiView === 'editor' && (
-        <>
-          <Header onSave={handleTriggerSave} onOpen={handleOpenList} />
-          <div className="app-content">
-            <Grid />
-            <Toolbar />
-            <OperationHints />
-          </div>
-          <SaveDialog
-            isOpen={isSaveDialogOpen}
-            onClose={() => { setIsSaveDialogOpen(false); setPendingSaveData(null); }}
-            onSave={handleSaveAs}
+        {uiView === 'list' && (
+          <BlueprintList
+            onSelect={handleLoadBlueprint}
+            onCreateNew={handleCreateNew}
+            mode={blueprintListMode}
           />
-        </>
-      )}
+        )}
 
-      {uiView === 'about' && (
-        <About />
-      )}
+        {uiView === 'editor' && (
+          <>
+            <Header onSave={handleTriggerSave} onOpen={handleOpenList} />
+            <div className="app-content">
+              <Grid />
+              <Toolbar />
+              <OperationHints />
+            </div>
+            <SaveDialog
+              isOpen={isSaveDialogOpen}
+              onClose={() => { setIsSaveDialogOpen(false); setPendingSaveData(null); }}
+              onSave={handleSaveAs}
+            />
+          </>
+        )}
 
-      {uiView === 'settings' && (
-        <Settings />
-      )}
+        {uiView === 'about' && (
+          <About />
+        )}
+
+        {uiView === 'settings' && (
+          <Settings />
+        )}
+      </ErrorBoundary>
     </>
   );
 }

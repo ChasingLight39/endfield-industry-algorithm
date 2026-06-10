@@ -2,6 +2,7 @@ import html2canvas from 'html2canvas';
 import type { Point } from '../types';
 import { MACHINES } from '../config/machines';
 import { getRotatedDimensions } from './machineUtils';
+import { getBoundingBox } from './gridUtils';
 
 // ===== Base64 =====
 const toBase64Url = (bytes: Uint8Array): string => {
@@ -24,25 +25,7 @@ const encode = (data: { machines: any[]; connections: any[] }): Uint8Array => {
     const { machines, connections } = data;
 
     // Compute bounding box for position normalization
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const m of machines) {
-        const cfg = MACHINES.find(c => c.id === m.machineId);
-        if (!cfg) continue;
-        const { width, height } = getRotatedDimensions(cfg.width, cfg.height, m.rotation);
-        minX = Math.min(minX, m.x);
-        minY = Math.min(minY, m.y);
-        maxX = Math.max(maxX, m.x + width);
-        maxY = Math.max(maxY, m.y + height);
-    }
-    for (const c of connections) {
-        for (const p of c.path) {
-            minX = Math.min(minX, p.x);
-            minY = Math.min(minY, p.y);
-            maxX = Math.max(maxX, p.x + 1);
-            maxY = Math.max(maxY, p.y + 1);
-        }
-    }
-    if (!isFinite(minX)) { minX = 0; minY = 0; }
+    const bb = getBoundingBox(machines, connections);
 
     const out: number[] = [];
     const writeU16 = (v: number) => { out.push((v >> 8) & 0xFF, v & 0xFF); };
@@ -51,8 +34,8 @@ const encode = (data: { machines: any[]; connections: any[] }): Uint8Array => {
     writeU16(machines.length);
     for (const m of machines) {
         for (let i = 0; i < 3; i++) out.push(m.machineId.charCodeAt(i));
-        out.push(m.x - minX);
-        out.push(m.y - minY);
+        out.push(m.x - bb.minX);
+        out.push(m.y - bb.minY);
         out.push(m.rotation);
     }
 
@@ -61,8 +44,8 @@ const encode = (data: { machines: any[]; connections: any[] }): Uint8Array => {
     for (const c of connections) {
         const header = ((c.portType === 'Liquid' ? 1 : 0) << 5) | ((c.tailFacing & 3) << 2) | (c.headFacing & 3);
         out.push(header);
-        out.push(c.path[0].x - minX);
-        out.push(c.path[0].y - minY);
+        out.push(c.path[0].x - bb.minX);
+        out.push(c.path[0].y - bb.minY);
         const steps = c.path.length - 1;
         out.push(steps);
 
