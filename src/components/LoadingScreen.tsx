@@ -89,12 +89,12 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                         <span className="number">{Math.floor(progress)}</span>
                         <span className="percent">%</span>
                     </div>
-                    <div className="loading-label">加載中...</div>
+                    <div className="loading-label">加载中...</div>
                 </div>
 
                 <div className="right-section">
                     <img src={loadingImg} alt="Loading..." className="loading-img" />
-                    <div className="sub-text">終末地牛逼</div>
+                    <div className="sub-text">终末地牛逼</div>
                 </div>
             </div>
         </div>

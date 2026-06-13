@@ -14,7 +14,7 @@ export const About = () => {
     const handleCopy = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
         toaster.create({
-            title: `${label} 已複製`,
+            title: `${label} 已复制`,
             type: 'success',
             duration: 2000,
         });
@@ -23,17 +23,17 @@ export const About = () => {
     return (
         <Box width="100vw" height="100vh" bg="var(--gray-light)" p={8}>
             <Flex justify="space-between" align="center" mb={8} color="var(--gray-dark)">
-                <Heading size="xl">// 關於</Heading>
+                <Heading size="xl">// 关于</Heading>
                 <CloseButton size="sm" onClick={() => setUiView('editor')} />
             </Flex>
 
             <Box mb="16px" p={6} borderRadius="lg" bg="var(--black-light)" border="1px solid var(--gray)" alignSelf="stretch">
                 <Text fontSize="sm" color="var(--gray)" lineHeight="1.6">
-                    本工具僅為玩家社群製作的輔助工具，與遊戲官方無任何關聯。
+                    本工具仅为玩家社群制作的辅助工具，与游戏官方无任何关联。
                     <br />
-                    網站內使用的遊戲素材（包括但不限於圖片、圖標、設計元素）其版權均歸屬於遊戲官方及原作者所有。
+                    网站内使用的游戏素材（包括但不限于图片、图标、设计元素）其版权均归属于游戏官方及原作者所有。
                     <br />
-                    本工具不進行任何商業營利行為。若有任何侵權問題，請聯繫作者信箱進行刪除或更換。
+                    本工具不进行任何商业营利行为。若有任何侵权问题，请联系作者信箱进行删除或更换。
                 </Text>
             </Box>
 
@@ -47,7 +47,7 @@ export const About = () => {
                 alignItems={"center"}
             >
                 <Icon icon="tdesign:member-filled" color="var(--gray-dark)" />
-                <Text fontSize="lg" fontWeight="bold" color="var(--gray-dark)">成員 {memberInfo.length + 1} / {MAX_MEMBERS_DISPLAY}</Text>
+                <Text fontSize="lg" fontWeight="bold" color="var(--gray-dark)">成员 {memberInfo.length + 1} / {MAX_MEMBERS_DISPLAY}</Text>
             </Flex>
 
             <Flex w="100%" direction="column" gap="16px">

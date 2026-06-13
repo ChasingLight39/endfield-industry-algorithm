@@ -58,10 +58,10 @@ describe('Toolbar 组件', () => {
       render(<TestWrapper><Toolbar /></TestWrapper>);
       expect(screen.getByText('核心')).toBeInTheDocument();
       expect(screen.getByText('物流')).toBeInTheDocument();
-      expect(screen.getByText('倉儲存取')).toBeInTheDocument();
-      expect(screen.getByText('基礎生產')).toBeInTheDocument();
-      expect(screen.getByText('合成製造')).toBeInTheDocument();
-      expect(screen.getByText('電力')).toBeInTheDocument();
+      expect(screen.getByText('仓储存取')).toBeInTheDocument();
+      expect(screen.getByText('基础生产')).toBeInTheDocument();
+      expect(screen.getByText('合成制造')).toBeInTheDocument();
+      expect(screen.getByText('电力')).toBeInTheDocument();
     });
 
     it('默认选中 production 分类，显示对应机器', () => {

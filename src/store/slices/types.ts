@@ -93,8 +93,8 @@ export interface BlueprintSlice {
     resetGame: () => void;
     setUiView: (view: 'list' | 'editor' | 'about' | 'settings') => void;
     setBlueprintListMode: (mode: 'manage' | 'insert') => void;
-    startInsertBlueprint: (blueprint: { data: { machines: any[], connections: any[] } }) => void;
-    startInsertBlueprintOnNewMap: (blueprint: { data: { machines: any[], connections: any[] } }) => void;
+    startInsertBlueprint: (blueprint: { data: { machines: PlacedMachine[], connections: Connection[] } }) => void;
+    startInsertBlueprintOnNewMap: (blueprint: { data: { machines: PlacedMachine[], connections: Connection[] } }) => void;
 }
 
 export interface GameState extends CanvasSlice, MachinesSlice, ConnectionSlice, SelectionSlice, HistorySlice, BlueprintSlice {}

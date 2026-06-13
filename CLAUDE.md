@@ -368,7 +368,7 @@ const sideToDir: Record<Side, Direction> = { top: 0, right: 1, bottom: 2, left: 
 
 - [ ] **commitWiring 重构** — 搁置：逻辑仍在快速变化，时机未到
 - [ ] **重复材料图标** — 跳过：需游戏数据人工对照，不可猜测
-- [ ] **蓝图相关 `any` 类型** — 搁置：blueprintSlice(6)、shareUtils(4)、types.ts(2) 共 12 处 `any`，涉及序列化/反序列化边界，蓝图格式仍在演进，暂不锁定类型
+- [ ] **蓝图相关 `any` 类型** — ✅ **已修复 (2026-06-13 Sprint 7)**：全部 12 处 `any` 已消除，`shareUtils.ts` 新增 `DecodedBlueprint` 接口
 - [ ] **MAX_BLUEPRINTS 常量化** — 搁置：与蓝图模块同批处理
 
 ---
@@ -429,11 +429,22 @@ const sideToDir: Record<Side, Direction> = { top: 0, right: 1, bottom: 2, left: 
 
 ### 🔵 长期展望
 
-- [ ] **CI/CD**：GitHub Actions 跑 lint + typecheck + test
+- [x] **CI/CD**：GitHub Actions 跑 lint + typecheck + test ✅ **已完成 (2026-06-13 Sprint 7)**
+- [x] **繁→简中文转换收尾**：全部 UI 文案已统一为简体中文 ✅ **已完成 (2026-06-13 Sprint 7)**
+- [x] **全部 `any` 类型消除**：非测试代码中 `any` 已清零 ✅ **已完成 (2026-06-13 Sprint 7)**
 - [ ] **E2E 测试**：Playwright 测试完整用户流程（放置机器→连线→保存蓝图→分享）
 - [ ] **无障碍（a11y）**：键盘导航、ARIA 标签、屏幕阅读器支持
 - [ ] **移动端适配**：工具栏和 Header 的响应式布局
 - [ ] **英文国际化**：useChineseConverter 架构可扩展为完整 i18n
+- [ ] **Lint 清零**：24 个原有 ESLint 错误（react-hooks/rules-of-hooks、unused vars 等）
+
+### 🟣 Sprint 7：技术债清尾 + CI/CD ✅ **已完成 (2026-06-13)**
+
+- [x] **繁→简中文转换收尾**（6 个文件 ~70 处）：OperationHints / About / ShareModal / BlueprintList / SaveDialog / Toolbar / LoadingScreen
+- [x] **移除未使用的 `framer-motion` 依赖**
+- [x] **`any` 类型全面消除**：types.ts / App.tsx / shareUtils.ts / blueprintSlice.ts — 非测试代码 `any` 清零
+- [x] **CI/CD**：`.github/workflows/ci.yml` — push/PR 触发 lint + typecheck + test 三个独立 Job
+- [x] **Toolbar 测试修正**：Tab 标签 `倉儲存取` → `仓储存取`
 
 ## 部署
 

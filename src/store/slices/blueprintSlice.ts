@@ -21,11 +21,11 @@ export const createBlueprintSlice: StateCreator<GameState, [], [], BlueprintSlic
 
         const anchor = { x: bb.minX, y: bb.minY };
 
-        const newMachines = machines.map((m: any) => ({ ...m, id: crypto.randomUUID() }));
-        const newConnections = connections.map((c: any) => ({
+        const newMachines = machines.map((m) => ({ ...m, id: crypto.randomUUID() }));
+        const newConnections = connections.map((c) => ({
             ...c,
             id: crypto.randomUUID(),
-            path: c.path.map((p: any) => ({ ...p }))
+            path: c.path.map((p) => ({ ...p }))
         }));
 
         set({
@@ -52,11 +52,11 @@ export const createBlueprintSlice: StateCreator<GameState, [], [], BlueprintSlic
 
         const anchor = { x: bb.minX, y: bb.minY };
 
-        const newMachines = machines.map((m: any) => ({ ...m, id: crypto.randomUUID() }));
-        const newConnections = connections.map((c: any) => ({
+        const newMachines = machines.map((m) => ({ ...m, id: crypto.randomUUID() }));
+        const newConnections = connections.map((c) => ({
             ...c,
             id: crypto.randomUUID(),
-            path: c.path.map((p: any) => ({ ...p }))
+            path: c.path.map((p) => ({ ...p }))
         }));
 
         set({

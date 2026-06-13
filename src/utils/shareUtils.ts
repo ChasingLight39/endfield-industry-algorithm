@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas';
-import type { Point } from '../types';
+import type { Point, PlacedMachine, Connection, Direction } from '../types';
 import { MACHINES } from '../config/machines';
 import { getRotatedDimensions } from './machineUtils';
 import { getBoundingBox } from './gridUtils';
@@ -21,7 +21,14 @@ const fromBase64Url = (str: string): Uint8Array => {
 };
 
 // ===== Binary Format =====
-const encode = (data: { machines: any[]; connections: any[] }): Uint8Array => {
+interface DecodedBlueprint {
+  machines: PlacedMachine[];
+  connections: Connection[];
+  gridWidth: number;
+  gridHeight: number;
+}
+
+const encode = (data: { machines: PlacedMachine[]; connections: Connection[] }): Uint8Array => {
     const { machines, connections } = data;
 
     // Compute bounding box for position normalization
@@ -72,7 +79,7 @@ const encode = (data: { machines: any[]; connections: any[] }): Uint8Array => {
     return new Uint8Array(out);
 };
 
-const decode = (bytes: Uint8Array): any => {
+const decode = (bytes: Uint8Array): DecodedBlueprint => {
     let off = 0;
 
     const readU16 = (): number => {
@@ -83,7 +90,7 @@ const decode = (bytes: Uint8Array): any => {
 
     // Machines: each = 3 bytes ID + 1 byte x + 1 byte y + 1 byte rotation
     const machineCount = readU16();
-    const machines: any[] = [];
+    const machines: PlacedMachine[] = [];
     for (let i = 0; i < machineCount; i++) {
         const machineId = String.fromCharCode(bytes[off], bytes[off + 1], bytes[off + 2]);
         off += 3;
@@ -92,7 +99,7 @@ const decode = (bytes: Uint8Array): any => {
             machineId,
             x: bytes[off++],
             y: bytes[off++],
-            rotation: bytes[off++]
+            rotation: bytes[off++] as Direction
         });
     }
 
@@ -109,11 +116,11 @@ const decode = (bytes: Uint8Array): any => {
 
     // Connections
     const connCount = readU16();
-    const connections: any[] = [];
+    const connections: Connection[] = [];
     for (let i = 0; i < connCount; i++) {
         const header = bytes[off++];
-        const tailFacing = (header >> 2) & 3;
-        const headFacing = header & 3;
+        const tailFacing = ((header >> 2) & 3) as Direction;
+        const headFacing = (header & 3) as Direction;
         const portType = (header >> 5) & 1 ? 'Liquid' as const : 'Solid' as const;
         const tx = bytes[off++];
         const ty = bytes[off++];
@@ -154,7 +161,7 @@ const decode = (bytes: Uint8Array): any => {
 };
 
 // ===== Public API =====
-export const generateShareUrl = (blueprintData: any): string => {
+export const generateShareUrl = (blueprintData: { machines: PlacedMachine[]; connections: Connection[] }): string => {
     try {
         const bytes = encode(blueprintData);
         const encoded = toBase64Url(bytes);
@@ -165,7 +172,7 @@ export const generateShareUrl = (blueprintData: any): string => {
     }
 };
 
-export const parseShareUrl = async (): Promise<any | null> => {
+export const parseShareUrl = async (): Promise<DecodedBlueprint | null> => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('bp');
     if (!code) return null;

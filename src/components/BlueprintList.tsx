@@ -25,7 +25,7 @@ export const BlueprintList = ({ onSelect, onCreateNew, mode }: BlueprintListProp
 
     const handleDelete = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        if (confirm('確定要刪除此藍圖嗎?')) {
+        if (confirm('确定要删除此蓝图吗?')) {
             deleteBlueprint(id);
             // 直接从本地状态过滤，避免重新读取 localStorage
             setBlueprints(prev => prev.filter(b => b.id !== id));
@@ -68,7 +68,7 @@ export const BlueprintList = ({ onSelect, onCreateNew, mode }: BlueprintListProp
             p={8}
         >
             <Box borderLeft={"4px solid var(--gray-dark)"} pl={"8px"}>
-                <Text color={"var(--gray-dark)"} fontSize={"xl"} fontWeight={"bold"}>藍圖一覽</Text>
+                <Text color={"var(--gray-dark)"} fontSize={"xl"} fontWeight={"bold"}>蓝图一览</Text>
                 <Flex alignItems={"flex-end"}>
                     <Text color={"var(--black)"} fontSize={"xl"} fontWeight={"bold"}> {blueprints.length}</Text>
                     <Text color={"var(--black)"} fontSize={"md"} fontWeight={"bold"} pb={"1px"}> / 999</Text>
@@ -96,7 +96,7 @@ export const BlueprintList = ({ onSelect, onCreateNew, mode }: BlueprintListProp
                 >
                     <VStack>
                         <FilePlus size={36} color="var(--gray-dark)" />
-                        <Text fontSize="lg" fontWeight="bold" color="var(--gray-dark)">新建藍圖</Text>
+                        <Text fontSize="lg" fontWeight="bold" color="var(--gray-dark)">新建蓝图</Text>
                     </VStack>
                 </Box>
 
@@ -151,11 +151,11 @@ export const BlueprintList = ({ onSelect, onCreateNew, mode }: BlueprintListProp
                         <Drawer.Header backgroundColor={"var(--gray-light)"}>
                             <Drawer.Title color="var(--gray-dark)" >
                                 <Box borderLeft={"4px solid var(--gray-dark)"} pl={"8px"}>
-                                    <Text color={"var(--gray-dark)"} fontSize={"sm"} fontWeight={"bold"}>藍圖詳情</Text>
+                                    <Text color={"var(--gray-dark)"} fontSize={"sm"} fontWeight={"bold"}>蓝图详情</Text>
                                 </Box>
                                 <Flex alignItems={"flex-end"} gap={"1px"}>
                                     <Text fontSize={"sm"}>[</Text>
-                                    <Text fontSize={"2xl"} pb={"1px"}>{selectedBlueprint?.name || '藍圖名稱'}</Text>
+                                    <Text fontSize={"2xl"} pb={"1px"}>{selectedBlueprint?.name || '蓝图名称'}</Text>
                                     <Text fontSize={"sm"}>]</Text>
                                 </Flex>
                             </Drawer.Title>
@@ -168,11 +168,11 @@ export const BlueprintList = ({ onSelect, onCreateNew, mode }: BlueprintListProp
                             {selectedBlueprint && (
                                 <Flex direction={"column"} gap={"8px"} fontWeight={"bold"}>
                                     <Box>
-                                        <Text color={"var(--yellow)"}>創建日期</Text>
+                                        <Text color={"var(--yellow)"}>创建日期</Text>
                                         <Text>{new Date(selectedBlueprint.createdAt).toLocaleString()}</Text>
                                     </Box>
                                     <Box>
-                                        <Text color={"var(--yellow)"}>內容尺寸</Text>
+                                        <Text color={"var(--yellow)"}>内容尺寸</Text>
                                         <Text>{selectedBlueprint.data.actualWidth} x {selectedBlueprint.data.actualHeight}</Text>
                                     </Box>
                                     <Flex wrap={"wrap"} gap={"4px"}>
@@ -190,7 +190,7 @@ export const BlueprintList = ({ onSelect, onCreateNew, mode }: BlueprintListProp
                                     variant="outline"
                                     className="gray-btn"
                                 >
-                                    關閉
+                                    关闭
                                 </Button>
                             </Drawer.ActionTrigger>
                             {mode === 'insert' ? (
@@ -198,19 +198,19 @@ export const BlueprintList = ({ onSelect, onCreateNew, mode }: BlueprintListProp
                                     <Button onClick={handlePasteInsert}
                                         variant="outline"
                                         className="yellow-btn">
-                                        貼上到當前
+                                        贴上到当前
                                     </Button>
                                     <Button onClick={handleNewMapInsert}
                                         variant="outline"
                                         className="yellow-btn">
-                                        新建地圖放置
+                                        新建地图放置
                                     </Button>
                                 </>
                             ) : (
                                 <Button onClick={handleConfirmOpen}
                                     variant="outline"
                                     className="yellow-btn">
-                                    打開藍圖
+                                    打开蓝图
                                 </Button>
                             )}
                         </Drawer.Footer>

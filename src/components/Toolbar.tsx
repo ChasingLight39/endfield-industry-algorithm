@@ -10,10 +10,10 @@ import './Toolbar.scss';
 const TABS = [
     { id: 'core', label: '核心' },
     { id: 'logistics', label: '物流' },
-    { id: 'storage', label: '倉儲存取' },
-    { id: 'production', label: '基礎生產' },
-    { id: 'processing', label: '合成製造' },
-    { id: 'power', label: '電力' },
+    { id: 'storage', label: '仓储存取' },
+    { id: 'production', label: '基础生产' },
+    { id: 'processing', label: '合成制造' },
+    { id: 'power', label: '电力' },
 ];
 
 const MACHINE_GROUPS: Record<string, string[]> = {

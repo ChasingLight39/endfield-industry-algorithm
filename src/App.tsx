@@ -207,7 +207,7 @@ export default function App() {
   }, [pendingSaveData, machines, connections, setCurrentBlueprint]);
 
   const handleLoadBlueprint = useCallback((bp: Blueprint) => {
-    const data = bp.data as any;
+    const data = bp.data as Blueprint['data'] & { gridWidth?: number; gridHeight?: number };
     const gw = data.gridWidth ?? Math.max(data.actualWidth + DEFAULT_CONTENT_PADDING, 24);
     const gh = data.gridHeight ?? Math.max(data.actualHeight + DEFAULT_CONTENT_PADDING, 24);
     loadGame(bp.data.machines, bp.data.connections, gw, gh, bp.id, bp.name);

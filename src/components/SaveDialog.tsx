@@ -25,13 +25,13 @@ export const SaveDialog = ({ isOpen, onClose, onSave }: SaveDialogProps) => {
             <Dialog.Positioner>
                 <Dialog.Content backgroundColor={"var(--gray-light)"}>
                     <Dialog.Header>
-                        <Dialog.Title color={"var(--gray-dark)"}>保存藍圖</Dialog.Title>
+                        <Dialog.Title color={"var(--gray-dark)"}>保存蓝图</Dialog.Title>
                     </Dialog.Header>
                     <Dialog.Body
                     >
                         <VStack gap={4}>
                             <Input
-                                placeholder="請輸入藍圖名稱..."
+                                placeholder="请输入蓝图名称..."
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}

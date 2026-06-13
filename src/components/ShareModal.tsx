@@ -41,14 +41,14 @@ export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
     const handleGenerate = async () => {
         setIsGenerating(true);
         try {
-            // 1. 生成連結
+            // 1. 生成链接
             const data = {
                 machines,
                 connections,
                 gridWidth,
                 gridHeight,
-                // 載入時我們會重新建立 '實際' 尺寸...
-                // 解析邏輯需要處理此資料結構
+                // 加载时我们会重新建立 '实际' 尺寸...
+                // 解析逻辑需要处理此数据结构
             };
             const url = generateShareUrl(data);
             setShareLink(url);
@@ -62,14 +62,14 @@ export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
 
         } catch (e) {
             console.error(e);
-            toaster.create({ title: '生成分享資訊失敗', type: 'error' });
+            toaster.create({ title: '生成分享信息失败', type: 'error' });
             setIsGenerating(false);
         }
     };
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(shareLink);
-        toaster.create({ title: '複製成功', type: 'success' });
+        toaster.create({ title: '复制成功', type: 'success' });
     };
 
     const handleDownloadImage = () => {
@@ -94,14 +94,14 @@ export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
                         <Dialog.Title>
                             <Box borderLeft={"4px solid var(--gray-dark)"} pl={"8px"}>
                                 <Text color={"var(--gray-dark)"} fontSize={"xl"} fontWeight={"bold"}>
-                                    分享藍圖
+                                    分享蓝图
                                 </Text>
                             </Box>
                         </Dialog.Title>
                     </Dialog.Header>
                     <Dialog.Body>
                         <VStack gap={6} align="stretch">
-                            {/* 截圖區域 */}
+                            {/* 截图区域 */}
                             <Box
                                 display="flex"
                                 alignItems="center"
@@ -112,20 +112,20 @@ export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
                                 {isGenerating ? (
                                     <VStack>
                                         <Spinner size="lg" color="blue.500" />
-                                        <Text color="gray.400" fontSize="sm">生成預覽圖中...</Text>
+                                        <Text color="gray.400" fontSize="sm">生成预览图中...</Text>
                                     </VStack>
                                 ) : imageUrl ? (
                                     <Image boxShadow="md" src={imageUrl} alt="Blueprint Preview" maxH="300px" objectFit="contain" />
                                 ) : (
-                                    <Text color="red.400">生成預覽圖失敗</Text>
+                                    <Text color="red.400">生成预览图失败</Text>
                                 )}
                             </Box>
 
-                            {/* 連結區域 */}
+                            {/* 链接区域 */}
                             <VStack align="stretch" gap={2}>
                                 <Box borderLeft={"4px solid var(--gray-dark)"} pl={"8px"}>
                                     <Text color={"var(--gray-dark)"} fontSize={"md"} fontWeight={"bold"}>
-                                        分享連結
+                                        分享链接
                                     </Text>
                                 </Box>
                                 <HStack>
@@ -150,7 +150,7 @@ export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
                             className="gray-btn"
                             onClick={onClose}
                         >
-                            關閉
+                            关闭
                         </Button>
                         <Button
                             variant="outline"
@@ -158,7 +158,7 @@ export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
                             onClick={handleDownloadImage}
                             disabled={!imageUrl || isGenerating}
                         >
-                            下載圖片
+                            下载图片
                         </Button>
                     </Dialog.Footer>
                     <Dialog.CloseTrigger />
