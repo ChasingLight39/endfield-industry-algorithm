@@ -1,3 +1,5 @@
+import type React from 'react';
+
 /**
  * CSS 自定义属性的 TypeScript 类型约束
  *
@@ -18,8 +20,8 @@ export interface MachinePositionCSS {
   '--h': number;
 }
 
-/** 创建机器定位 CSS 自定义属性对象，带类型约束 */
-export const machinePositionStyle = (x: number, y: number, w: number, h: number): MachinePositionCSS => ({
+/** 创建机器定位 CSS 自定义属性对象，兼容 React.CSSProperties */
+export const machinePositionStyle = (x: number, y: number, w: number, h: number): React.CSSProperties & MachinePositionCSS => ({
   '--x': x,
   '--y': y,
   '--w': w,

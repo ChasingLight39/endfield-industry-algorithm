@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Machine } from './Machine';
 import { ConnectionSVGLayer } from './ConnectionSVGLayer';
