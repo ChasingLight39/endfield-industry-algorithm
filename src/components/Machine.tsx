@@ -7,7 +7,9 @@ import { getMachineConfig } from '../config/machines';
 import { useGameStore } from '../store/gameStore';
 import './Machine.scss';
 import { getRotatedDimensions, getRotatedPorts } from '../utils/machineUtils';
-import { GRID_SIZE } from '../config/constants';
+import { Z_INDEX } from '../config/zIndex';
+import { getPortStyle } from '../utils/portPosition';
+import { machinePositionStyle } from '../styles/cssCustomProps';
 
 interface MachineProps {
     data: PlacedMachine;
@@ -77,39 +79,6 @@ export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPower
         }
     }, []);
 
-    const getPortStyle = useCallback((p: { x: number, y: number, side: 'top' | 'right' | 'bottom' | 'left' }) => {
-        const style: React.CSSProperties = {};
-
-        // 端口坐标 p.x/p.y 是格子索引(0,1,2...)，需推到格子中心
-        // 20 - 容器padding(3) - 容器border(2) - 机身border(3) = 12
-        const cellCenter = (GRID_SIZE / 2) - 3 - 2 - 3; // = 12
-
-        switch (p.side) {
-            case 'left':
-                style.left = '-1px';
-                style.top = `${p.y * GRID_SIZE + cellCenter}px`;
-                style.transform = 'translate(0, -50%)';
-                break;
-            case 'right':
-                style.right = '-0.5px';
-                style.top = `${p.y * GRID_SIZE + cellCenter}px`;
-                style.transform = 'translate(0, -50%)';
-                break;
-            case 'top':
-                style.top = '-1px';
-                style.left = `${p.x * GRID_SIZE + cellCenter}px`;
-                style.transform = 'translate(-50%, 0)';
-                break;
-            case 'bottom':
-                style.bottom = '-0.5px';
-                style.left = `${p.x * GRID_SIZE + cellCenter}px`;
-                style.transform = 'translate(-50%, 0)';
-                break;
-        }
-
-        return style;
-    }, []);
-
     const getPortClasses = useCallback((currentPort: { x: number, y: number, side: string }) => {
         const classes: string[] = ['port', currentPort.side];
 
@@ -142,12 +111,7 @@ export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPower
     // ── 早期返回（在所有 hooks 之后） ──
     if (!config) return null;
 
-    const style = {
-        '--x': data.x,
-        '--y': data.y,
-        '--w': width,
-        '--h': height,
-    } as React.CSSProperties;
+    const style = machinePositionStyle(data.x, data.y, width, height);
 
     return (
         <div
@@ -181,7 +145,7 @@ export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPower
                             top: '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
-                            zIndex: 10,
+                            zIndex: Z_INDEX.POWER_ALERT_ICON,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'

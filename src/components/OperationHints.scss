@@ -4,7 +4,7 @@
     right: 20px;
     transform: translateY(-50%);
     // Removed background, backdrop-filter, border, box-shadow
-    z-index: 90;
+    z-index: var(--z-operation-hints);
     display: flex;
     flex-direction: column;
     gap: 12px;

@@ -23,7 +23,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     pointer-events: auto;
-    z-index: 100;
+    z-index: var(--z-toolbar);
 
     .section {
         display: flex;

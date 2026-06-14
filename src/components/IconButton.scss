@@ -45,7 +45,7 @@
         visibility: hidden;
         transition: all 0.2s ease;
         pointer-events: none; // Prevent tooltip from interfering with hover
-        z-index: 10;
+        z-index: var(--z-icon-tooltip);
         margin-top: 8px; // Spacing from button
 
         // Optional: Add a little arrow

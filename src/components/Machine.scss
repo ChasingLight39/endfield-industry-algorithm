@@ -8,10 +8,10 @@
     height: calc(var(--h) * var(--grid-size));
     padding: 3px;
     /* Shrink body relative to grid cell */
-    z-index: 10;
+    z-index: var(--z-machine-container);
 
     &:hover {
-        z-index: 2000;
+        z-index: var(--z-machine-hover);
     }
 }
 
@@ -45,7 +45,7 @@
         pointer-events: none;
         opacity: 0;
         transition: opacity 0.2s;
-        z-index: 1000;
+        z-index: var(--z-machine-label);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         font-size: 12px;
 

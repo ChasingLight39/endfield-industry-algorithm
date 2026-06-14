@@ -6,7 +6,7 @@
     height: 100vh;
     background-color: var(--black-dark);
     /* Dark background */
-    z-index: 9999;
+    z-index: var(--z-loading-screen);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -27,7 +27,7 @@
         /* Initial thin strip */
         background-color: var(--yellow, #fff000);
         /* Fallback yellow if var not defined */
-        z-index: 10;
+        z-index: var(--z-loading-bar);
         transition: width 0.5s cubic-bezier(0.65, 0, 0.35, 1), height 0.1s linear;
 
         &.expanded {
@@ -42,7 +42,7 @@
         width: 100%;
         height: 100%;
         display: flex;
-        z-index: 5;
+        z-index: var(--z-loading-content);
         /* Below the yellow bar when it expands over? Or above?
                        If user wants "fade out" after expansion, usually the bar covers everything.
                        Let's make z-index of yellow-bar higher (10) than content (5). */

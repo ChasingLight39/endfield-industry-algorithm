@@ -7,7 +7,7 @@
     background-color: var(--gray-light);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     flex-shrink: 0;
-    z-index: 1000;
+    z-index: var(--z-header);
     box-sizing: border-box;
 
     .logo {
