@@ -72,3 +72,27 @@ export const GameMode = {
 } as const;
 
 export type GameMode = typeof GameMode[keyof typeof GameMode];
+
+// ── 物流掩码 (按高度排列，值=渲染顺序) ──
+
+/** Bit 1 — Solid 连线层 */
+export const MASK_SOLID = 0b00000010;
+
+/** Bit 2 — Liquid 连线层 (含 Solid 层) */
+export const MASK_LIQUID = 0b00000100;
+
+/** portType → 连线掩码 */
+export const portTypeToMask: Record<PortType, number> = {
+  Solid: MASK_SOLID,
+  Liquid: MASK_LIQUID,
+  Gas: 0x00,  // 预留
+};
+
+/** Solid 物流器: 机器实体位 | Solid 层 = 0b00000011 */
+export const MASK_SOLID_MACHINE = 0b00000001 | MASK_SOLID;
+
+/** Liquid 物流器: 机器实体位 | Solid 层 | Liquid 层 = 0b00000111 */
+export const MASK_LIQUID_MACHINE = 0b00000001 | MASK_SOLID | MASK_LIQUID;
+
+/** 普通机器: 阻挡一切 = 0b11111111 */
+export const MASK_REGULAR_MACHINE = 0xFF;

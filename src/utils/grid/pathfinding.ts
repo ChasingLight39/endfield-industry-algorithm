@@ -1,17 +1,18 @@
 import type { Point, PlacedMachine, Connection, Direction, PortType } from '../../types';
-import { sideToDir } from '../../types';
+import { sideToDir, portTypeToMask } from '../../types';
 import { MACHINES } from '../../config/machines';
 import { getRotatedDimensions } from '../machineUtils';
 import { getVectorFromSide } from './direction';
 import { getCornerPoints } from './port';
-import { buildOccupancyGrid, buildConnectionGrid } from './occupancy';
+import { buildMergedGrid, buildConnectionGrid } from './occupancy';
 
 /** 8 分区曼哈顿路由: L 形直角折线，遇障碍自动换另一条路 */
 export const routeManhattan = (
   start: Point,
   end: Point,
   grid: Uint8Array,
-  gridW: number
+  gridW: number,
+  mask: number = 0xFF
 ): Point[] | null => {
   const tryRoute = (horizontalFirst: boolean): Point[] | null => {
     const path: Point[] = [];
@@ -29,7 +30,7 @@ export const routeManhattan = (
       while (cx !== tx || cy !== ty) {
         cx += sx;
         cy += sy;
-        if (grid[cy * gridW + cx]) {
+        if ((grid[cy * gridW + cx] & mask) !== 0) {
           return null;
         }
         path.push({ x: cx, y: cy });
@@ -93,27 +94,20 @@ export const findPath = (
     50
   ) + 10;
 
-  // 机器 + 连线占用矩阵
-  const machineGrid = buildOccupancyGrid(machines, gw, gh);
-  const fullConnGrid = buildConnectionGrid(conns, gw, gh);
-  const sameConnGrid = portType ? buildConnectionGrid(conns, gw, gh, portType) : fullConnGrid;
-  const grid = new Uint8Array(gw * gh);
-  for (let i = 0; i < grid.length; i++) {
-    const hasSame = sameConnGrid[i] === 1;
-    const hasOther = fullConnGrid[i] === 1 && !hasSame;
-    grid[i] = machineGrid[i] | (hasSame && hasOther ? 1 : 0);
-  }
+  // 机器 + 连线占用矩阵 (掩码系统)
+  const mergedGrid = portType
+    ? buildMergedGrid(machines, conns, gw, gh, portType)
+    : buildMergedGrid(machines, conns, gw, gh, 'Solid'); // 无 portType 时默认 Solid
+  const connMask = portType ? portTypeToMask[portType] : portTypeToMask['Solid'];
 
-  // 标记已有连线的拐弯格 → 禁止任何新路径穿越
-  for (const conn of conns) {
-    for (const cp of getCornerPoints(conn.path, conn.tailFacing, conn.headFacing)) {
-      if (cp.x >= 0 && cp.x < gw && cp.y >= 0 && cp.y < gh) grid[cp.y * gw + cp.x] = 1;
-    }
-  }
+  // 同类型连线网格 (仅拐弯检查用)
+  const sameConnGrid = portType
+    ? buildConnectionGrid(conns, gw, gh, portType)
+    : buildConnectionGrid(conns, gw, gh);
 
   // 一段路径: routeManhattan 不走任何格, 独立检查落点
   if (realStart.x === realEnd.x && realStart.y === realEnd.y) {
-    if (grid[realStart.y * gw + realStart.x]) return null;
+    if ((mergedGrid[realStart.y * gw + realStart.x] & connMask) !== 0) return null;
     if (portType && sameConnGrid[realStart.y * gw + realStart.x]) {
       const exitDir: Direction | undefined = endSide ? ((sideToDir[endSide] + 2) % 4) as Direction : undefined;
       if (entryDir !== undefined && exitDir !== undefined && entryDir !== exitDir) return null;
@@ -122,9 +116,9 @@ export const findPath = (
   }
 
   // routeManhattan 不检查起点, 独立检查 realStart
-  if (grid[realStart.y * gw + realStart.x]) return null;
+  if ((mergedGrid[realStart.y * gw + realStart.x] & connMask) !== 0) return null;
 
-  const corePath = routeManhattan(realStart, realEnd, grid, gw);
+  const corePath = routeManhattan(realStart, realEnd, mergedGrid, gw, connMask);
   if (!corePath) return null;
 
   const fullPath = [realStart, ...corePath];
@@ -147,7 +141,8 @@ export const trySingleLRoute = (
   firstAxis: Direction,
   grid: Uint8Array,
   gridW: number,
-  gridH: number
+  gridH: number,
+  mask: number = 0xFF
 ): Point[] | null => {
   const path: Point[] = [];
 
@@ -169,7 +164,7 @@ export const trySingleLRoute = (
     cx += step1.x;
     cy += step1.y;
     if (cx < 0 || cx >= gridW || cy < 0 || cy >= gridH) return null;
-    if (grid[cy * gridW + cx]) return null;
+    if ((grid[cy * gridW + cx] & mask) !== 0) return null;
     path.push({ x: cx, y: cy });
   }
 
@@ -184,7 +179,7 @@ export const trySingleLRoute = (
       cx += step2.x;
       cy += step2.y;
       if (cx < 0 || cx >= gridW || cy < 0 || cy >= gridH) return null;
-      if (grid[cy * gridW + cx]) return null;
+      if ((grid[cy * gridW + cx] & mask) !== 0) return null;
       path.push({ x: cx, y: cy });
     }
   }

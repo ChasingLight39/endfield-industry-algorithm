@@ -6,8 +6,8 @@ import type { PlacedMachine } from '../types';
 import { getMachineConfig } from '../config/machines';
 import { useGameStore } from '../store/gameStore';
 import './Machine.scss';
-import { getRotatedDimensions, getRotatedPorts } from '../utils/machineUtils';
-import { Z_INDEX } from '../config/zIndex';
+import { getRotatedDimensions, getRotatedPorts, getMachineMask } from '../utils/machineUtils';
+import { Z_INDEX, machineZ } from '../config/zIndex';
 import { getPortStyle } from '../utils/portPosition';
 import { machinePositionStyle } from '../styles/cssCustomProps';
 
@@ -15,9 +15,11 @@ interface MachineProps {
     data: PlacedMachine;
     isSelected?: boolean;
     isPowered?: boolean;
+    /** z-index 基底, 默认 STATIC_BASE */
+    zBase?: number;
 }
 
-export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPowered = true }) => {
+export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPowered = true, zBase = Z_INDEX.STATIC_BASE }) => {
     const config = getMachineConfig(data.machineId);
 
     // 细粒度 store selector：只订阅本组件需要的字段
@@ -111,7 +113,10 @@ export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPower
     // ── 早期返回（在所有 hooks 之后） ──
     if (!config) return null;
 
-    const style = machinePositionStyle(data.x, data.y, width, height);
+    const style = {
+        ...machinePositionStyle(data.x, data.y, width, height),
+        zIndex: machineZ(zBase, getMachineMask(data.machineId)),
+    };
 
     return (
         <div

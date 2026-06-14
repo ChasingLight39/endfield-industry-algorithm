@@ -1,7 +1,8 @@
 import type { StateCreator } from 'zustand';
 import type { ConnectionSlice, GameState } from './types';
 import type { Connection, Point, Direction, PlacedMachine } from '../../types';
-import { sideToDir, GameMode } from '../../types';
+import { sideToDir, GameMode, portTypeToMask, MASK_SOLID_MACHINE, MASK_LIQUID_MACHINE } from '../../types';
+import { getMachineMask } from '../../utils/machineUtils';
 import { MACHINES } from '../../config/machines';
 import {
     trySingleLRoute,
@@ -9,7 +10,7 @@ import {
     getInputPortOuterCells,
     findMachineAt,
     splitConnectionAt,
-    buildOccupancyGrid,
+    buildMergedGrid,
     buildConnectionGrid,
     getCornerPoints,
 } from '../../utils/gridUtils';
@@ -80,24 +81,21 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
         const startPos = bestPort.pos;
         const tailFacing = bestPort.facing;
 
-        // ── 构建占用网格（复用现有逻辑） ──
+        // ── 构建占用网格 (掩码系统) ──
         const gw = gridWidth || 100;
         const gh = gridHeight || 100;
-        const machineGrid = buildOccupancyGrid(machines, gw, gh);
-        const fullConnGrid = buildConnectionGrid(connections, gw, gh);
+        const connMask = portTypeToMask[portType];
+        const bridgeMask = portType === 'Solid' ? MASK_SOLID_MACHINE : MASK_LIQUID_MACHINE;
         const sameConnGrid = buildConnectionGrid(connections, gw, gh, portType);
-        const grid = new Uint8Array(gw * gh);
-        for (let i = 0; i < grid.length; i++) {
-            const hasSame = sameConnGrid[i] === 1;
-            const hasOther = fullConnGrid[i] === 1 && !hasSame;
-            grid[i] = machineGrid[i] | (hasOther ? 1 : 0);
-        }
-        // 标记已有连线拐弯格 → 阻止穿越
+        const mergedGrid = buildMergedGrid(machines, connections, gw, gh, portType);
+
+        // 已有同类型连线的拐弯点 (桥不能放在已有线的拐弯上)
+        const existingCornerGrid = new Uint8Array(gw * gh);
         for (const conn of connections) {
             if (conn.portType !== portType) continue;
             for (const cp of getCornerPoints(conn.path, conn.tailFacing, conn.headFacing)) {
                 if (cp.x >= 0 && cp.x < gw && cp.y >= 0 && cp.y < gh) {
-                    grid[cp.y * gw + cp.x] = 1;
+                    existingCornerGrid[cp.y * gw + cp.x] = 1;
                 }
             }
         }
@@ -128,10 +126,16 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                 // 检查起点已在同类型连线上的情况（拐弯检测）
                 if (startPos.x === ic.pos.x && startPos.y === ic.pos.y) {
                     // 起终点相同：检查该格是否被阻
-                    if (grid[startPos.y * gw + startPos.x] === 0) {
+                    if ((mergedGrid[startPos.y * gw + startPos.x] & connMask) === 0) {
                         const entryDir = ((sideToDir[ic.side] + 2) % 4) as Direction;
                         if (!isContinuing && sameConnGrid[startPos.y * gw + startPos.x] && tailFacing !== entryDir) {
                             continue; // 非续接时拐弯在同类型线上 → 不放桥（续接首格豁免）
+                        }
+                        // 桥掩码冲突检查
+                        if (sameConnGrid[startPos.y * gw + startPos.x]) {
+                            const cellMask = mergedGrid[startPos.y * gw + startPos.x] | connMask;
+                            if ((bridgeMask & cellMask) !== connMask) continue;
+                            if (existingCornerGrid[startPos.y * gw + startPos.x]) continue;
                         }
                         bestInput = { pos: ic.pos, side: ic.side, path: [startPos] };
                         bestInputDist = 0;
@@ -141,11 +145,11 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                 }
 
                 // 检查起点是否被阻挡
-                if (grid[startPos.y * gw + startPos.x]) continue;
+                if ((mergedGrid[startPos.y * gw + startPos.x] & connMask) !== 0) continue;
 
-                let path = trySingleLRoute(startPos, ic.pos, firstAxis, grid, gw, gh);
+                let path = trySingleLRoute(startPos, ic.pos, firstAxis, mergedGrid, gw, gh, connMask);
                 if (!path && lShapeMode === 'auto') {
-                    path = trySingleLRoute(startPos, ic.pos, perpendicularDir(tailFacing, startPos, ic.pos), grid, gw, gh);
+                    path = trySingleLRoute(startPos, ic.pos, perpendicularDir(tailFacing, startPos, ic.pos), mergedGrid, gw, gh, connMask);
                 }
                 if (!path) continue;
 
@@ -163,6 +167,20 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                     }
                 }
                 if (cornerOnSame) continue;
+
+                // 桥掩码冲突检查 (物理冲突 + 拐弯约束)
+                let bridgeConflict = false;
+                for (const p of fullPath) {
+                    if (isContinuing && p.x === startPos.x && p.y === startPos.y) continue;
+                    const idx = p.y * gw + p.x;
+                    if (!sameConnGrid[idx]) continue;  // 非交叉点，不放桥
+                    // 物理冲突: (bridgeMask & cellMask) 不能超出同类型连线层
+                    const cellMask = mergedGrid[idx] | connMask;
+                    if ((bridgeMask & cellMask) !== connMask) { bridgeConflict = true; break; }
+                    // 拐弯约束: 桥不能放在已有线的拐弯上
+                    if (existingCornerGrid[idx]) { bridgeConflict = true; break; }
+                }
+                if (bridgeConflict) continue;
 
                 const dist = Math.abs(ic.pos.x - mouseGridPos.x) + Math.abs(ic.pos.y - mouseGridPos.y);
                 if (dist < bestInputDist) {
@@ -218,7 +236,7 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                 : tailFacing;
 
             // 检查起点自身 — 被阻挡时仍算 L 形视觉路径（避免跳到斜线）
-            if (grid[startPos.y * gw + startPos.x]) {
+            if ((mergedGrid[startPos.y * gw + startPos.x] & connMask) !== 0) {
                 const emptyGrid = new Uint8Array(gw * gh);
                 const visualPath = trySingleLRoute(startPos, mouseGridPos, firstAxis, emptyGrid, gw, gh);
                 if (visualPath) {
@@ -231,9 +249,9 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                 return;
             }
 
-            let path = trySingleLRoute(startPos, mouseGridPos, firstAxis, grid, gw, gh);
+            let path = trySingleLRoute(startPos, mouseGridPos, firstAxis, mergedGrid, gw, gh, connMask);
             if (!path && lShapeMode === 'auto') {
-                path = trySingleLRoute(startPos, mouseGridPos, perpendicularDir(tailFacing, startPos, mouseGridPos), grid, gw, gh);
+                path = trySingleLRoute(startPos, mouseGridPos, perpendicularDir(tailFacing, startPos, mouseGridPos), mergedGrid, gw, gh, connMask);
             }
             if (path) {
                 const fullPath = [startPos, ...path];
@@ -246,6 +264,17 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                     if (cp.x >= 0 && cp.x < gw && cp.y >= 0 && cp.y < gh && sameConnGrid[cp.y * gw + cp.x]) {
                         valid = false;
                         break;
+                    }
+                }
+                // 桥掩码冲突检查 (物理冲突 + 拐弯约束)
+                if (valid) {
+                    for (const p of fullPath) {
+                        if (isContinuing && p.x === startPos.x && p.y === startPos.y) continue;
+                        const idx = p.y * gw + p.x;
+                        if (!sameConnGrid[idx]) continue;
+                        const cellMask = mergedGrid[idx] | connMask;
+                        if ((bridgeMask & cellMask) !== connMask) { valid = false; break; }
+                        if (existingCornerGrid[idx]) { valid = false; break; }
                     }
                 }
                 if (valid) {
@@ -293,7 +322,7 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
         const headFacing = previewHeadFacing;
         const wiringPortType = portType;
 
-        // ── 交叉检测与桥生成（复用现有逻辑） ──
+        // ── 交叉检测与桥生成 ──
         const pointToConns = new Map<string, Connection[]>();
         for (const conn of connections) {
             if (conn.portType !== wiringPortType) continue;
@@ -305,33 +334,71 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
             }
         }
 
+        // 已有同类型连线拐弯点 (桥不能放在已有线的拐弯处)
+        const { gridWidth: gw2, gridHeight: gh2 } = get();
+        const existingCornerGrid2 = new Uint8Array((gw2 || 100) * (gh2 || 100));
+        for (const conn of connections) {
+            if (conn.portType !== wiringPortType) continue;
+            for (const cp of getCornerPoints(conn.path, conn.tailFacing, conn.headFacing)) {
+                const w = gw2 || 100;
+                if (cp.x >= 0 && cp.x < w && cp.y >= 0 && cp.y < (gh2 || 100)) {
+                    existingCornerGrid2[cp.y * w + cp.x] = 1;
+                }
+            }
+        }
+
         const intersectionPoints: Point[] = [];
         for (const p of path) {
             // 续接时首格与上一段重合是有意为之，不放桥
             if (isContinuing && p.x === path[0].x && p.y === path[0].y) continue;
             const key = `${p.x},${p.y}`;
             if (pointToConns.has(key)) {
+                const w = gw2 || 100;
+                if (existingCornerGrid2[p.y * w + p.x]) {
+                    // 交叉点在已有线拐弯处 → 不放桥，不拆分
+                    continue;
+                }
                 intersectionPoints.push(p);
             }
         }
 
         const bridgeId = wiringPortType === 'Liquid' ? 'pbr' : 'lbr';
+        const bridgeMask = getMachineMask(bridgeId);
+        const connMask2 = portTypeToMask[wiringPortType];
+
+        // 构建全量掩码网格 (机器 + 全部连线)
+        const { gridWidth: gw3, gridHeight: gh3 } = get();
+        const w3 = gw3 || 100; const h3 = gh3 || 100;
+        const fullMaskGrid = new Uint8Array(w3 * h3);
+        for (const m of machines) {
+            const mm = getMachineMask(m.machineId);
+            const cfg = MACHINES.find(c => c.id === m.machineId);
+            if (!cfg) continue;
+            const { width, height } = getRotatedDimensions(cfg.width, cfg.height, m.rotation);
+            const mx2 = Math.min(m.x + width, w3); const my2 = Math.min(m.y + height, h3);
+            for (let y = Math.max(m.y, 0); y < my2; y++) {
+                const row = y * w3;
+                for (let x = Math.max(m.x, 0); x < mx2; x++) { fullMaskGrid[row + x] |= mm; }
+            }
+        }
+        for (const c of connections) {
+            const cm = portTypeToMask[c.portType];
+            for (const p of c.path) {
+                if (p.x >= 0 && p.x < w3 && p.y >= 0 && p.y < h3) { fullMaskGrid[p.y * w3 + p.x] |= cm; }
+            }
+        }
+
         const bridgesToCreate: PlacedMachine[] = [];
         for (const p of intersectionPoints) {
-            const isOccupied = machines.some(m => {
-                const config = MACHINES.find(c => c.id === m.machineId);
-                if (!config) return false;
-                const { width, height } = getRotatedDimensions(config.width, config.height, m.rotation);
-                return p.x >= m.x && p.x < m.x + width && p.y >= m.y && p.y < m.y + height;
+            const cellMask = fullMaskGrid[p.y * w3 + p.x];
+            // bridgeMask 与 cellMask 的冲突不能超出同类型连线层
+            if ((bridgeMask & cellMask) !== connMask2) continue;
+            bridgesToCreate.push({
+                id: crypto.randomUUID(),
+                machineId: bridgeId,
+                x: p.x, y: p.y,
+                rotation: 0,
             });
-            if (!isOccupied) {
-                bridgesToCreate.push({
-                    id: crypto.randomUUID(),
-                    machineId: bridgeId,
-                    x: p.x, y: p.y,
-                    rotation: 0,
-                });
-            }
         }
 
         // ── 拆分被穿越的已有连线 ──

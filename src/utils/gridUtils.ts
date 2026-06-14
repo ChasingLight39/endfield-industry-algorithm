@@ -3,7 +3,7 @@ export { getBoundingBox, getMachineRect, isOverlapping, checkCollision, calculat
 export type { BoundingBox } from './grid/collision';
 
 // ── 占用网格 ──
-export { buildOccupancyGrid, buildConnectionGrid } from './grid/occupancy';
+export { buildOccupancyGrid, buildConnectionGrid, buildMergedGrid } from './grid/occupancy';
 
 // ── 方向工具 ──
 export { getVectorFromSide, dirFromPoints, computeHeadFacing } from './grid/direction';

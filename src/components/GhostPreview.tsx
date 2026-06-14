@@ -7,7 +7,8 @@ import { MACHINES } from '../config/machines';
 import { checkCollision } from '../utils/gridUtils';
 import { getRotatedDimensions, getRotatedPorts } from '../utils/machineUtils';
 import { GRID_SIZE } from '../config/constants';
-import { Z_INDEX } from '../config/zIndex';
+import { Z_INDEX, machineZ } from '../config/zIndex';
+import { getMachineMask } from '../utils/machineUtils';
 import { getGhostArrowPosition } from '../utils/portPosition';
 import './GhostPreview.scss';
 
@@ -81,6 +82,7 @@ export const GhostPreview: React.FC<GhostPreviewProps> = memo(({ hoverPos }) => 
           top: hoverPos.y * GRID_SIZE,
           width: ghostWidth * GRID_SIZE,
           height: ghostHeight * GRID_SIZE,
+          zIndex: machineZ(Z_INDEX.GHOST_BASE, getMachineMask(ghostConfig.id)),
         } as React.CSSProperties}
       />
 
@@ -96,6 +98,7 @@ export const GhostPreview: React.FC<GhostPreviewProps> = memo(({ hoverPos }) => 
               left: pos.left,
               top: pos.top,
               transform: `rotate(${pos.rotation}deg)`,
+              zIndex: Z_INDEX.GHOST_ARROW,
             } as React.CSSProperties}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

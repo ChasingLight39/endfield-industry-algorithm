@@ -1,4 +1,18 @@
 import type { Direction, PortConfig, PlacedMachine, MachineConfig } from '../types';
+import { MASK_SOLID_MACHINE, MASK_LIQUID_MACHINE, MASK_REGULAR_MACHINE } from '../types';
+
+/** Solid 物流器 ID 集合 */
+const SOLID_LOGISTICS = new Set(['lbr', 'spl', 'mrg', 'iip']);
+
+/** Liquid 物流器 ID 集合 */
+const LIQUID_LOGISTICS = new Set(['pbr', 'psp', 'pmg', 'pip', 'cpe', 'cpx', 'mce', 'mcx']);
+
+/** 根据机器 ID 返回其物理高度掩码 */
+export const getMachineMask = (machineId: string): number => {
+    if (SOLID_LOGISTICS.has(machineId)) return MASK_SOLID_MACHINE;
+    if (LIQUID_LOGISTICS.has(machineId)) return MASK_LIQUID_MACHINE;
+    return MASK_REGULAR_MACHINE;
+};
 
 export const getRotatedDimensions = (width: number, height: number, rotation: Direction) => {
     if (rotation % 2 === 1) { // 1 (90) or 3 (270)

@@ -1,55 +1,27 @@
 import React, { memo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Machine } from './Machine';
-import { GameMode } from '../types';
-import type { Point, Connection } from '../types';
+import { GameMode, portTypeToMask } from '../types';
+import type { Point, Connection, PortType } from '../types';
 import { pathToPoints } from '../utils/portPosition';
-import { Z_INDEX } from '../config/zIndex';
+import { Z_INDEX, connZ } from '../config/zIndex';
 
 interface BatchMovePreviewProps {
   hoverPos: Point | null;
 }
 
-/** MOVE_SELECTION / BLUEPRINT_PLACE 模式下的批量移动预览（机器虚影 + 连线虚影） */
-export const BatchMovePreview: React.FC<BatchMovePreviewProps> = memo(({ hoverPos }) => {
-  const mode = useGameStore(s => s.mode);
-  const moveAnchor = useGameStore(s => s.moveAnchor);
-  const movingMachinesSnapshot = useGameStore(s => s.movingMachinesSnapshot);
-  const movingConnectionsSnapshot = useGameStore(s => s.movingConnectionsSnapshot);
-
-  const show = (mode === GameMode.MOVE_SELECTION || mode === GameMode.BLUEPRINT_PLACE) && moveAnchor && hoverPos;
-  if (!show) return null;
-
-  const offsetX = hoverPos!.x - moveAnchor!.x;
-  const offsetY = hoverPos!.y - moveAnchor!.y;
-
-  return (
-    <>
-      {/* 机器虚影 */}
-      {movingMachinesSnapshot.map(m => {
-        const ghostX = m.x + offsetX;
-        const ghostY = m.y + offsetY;
-
-        return (
-          <div key={`ghost-${m.id}`} style={{ opacity: 0.6, pointerEvents: 'none', zIndex: Z_INDEX.GHOST }}>
-            <Machine
-              data={{ ...m, x: ghostX, y: ghostY }}
-              isSelected={true}
-              isPowered={true}
-            />
-          </div>
-        );
-      })}
-
-      {/* 连线虚影 SVG */}
+/** 渲染单个类型的批量移动连线 SVG */
+const BatchMoveConnectionsSVG: React.FC<{ connections: Connection[]; portType: PortType; zIndex: number }> = memo(
+  ({ connections, portType, zIndex }) => {
+    if (connections.length === 0) return null;
+    return (
       <svg
         className="connections-layer"
-        style={{ pointerEvents: 'none', zIndex: Z_INDEX.BATCH_MOVE_CONNECTIONS }}
+        style={{ pointerEvents: 'none', zIndex }}
       >
-        {movingConnectionsSnapshot.map((conn: Connection) => {
-          const newPath = conn.path.map(p => ({ x: p.x + offsetX, y: p.y + offsetY }));
-          const pointsStr = pathToPoints(newPath, conn.tailFacing, conn.headFacing);
-          const linePrefix = conn.portType === 'Liquid' ? 'pipe' : 'conveyor';
+        {connections.map((conn: Connection) => {
+          const pointsStr = pathToPoints(conn.path, conn.tailFacing, conn.headFacing);
+          const linePrefix = portType === 'Liquid' ? 'pipe' : 'conveyor';
 
           return (
             <React.Fragment key={`ghost-conn-${conn.id}`}>
@@ -67,6 +39,64 @@ export const BatchMovePreview: React.FC<BatchMovePreviewProps> = memo(({ hoverPo
           );
         })}
       </svg>
+    );
+  },
+);
+
+/** MOVE_SELECTION / BLUEPRINT_PLACE 模式下的批量移动预览（机器虚影 + 连线虚影） */
+export const BatchMovePreview: React.FC<BatchMovePreviewProps> = memo(({ hoverPos }) => {
+  const mode = useGameStore(s => s.mode);
+  const moveAnchor = useGameStore(s => s.moveAnchor);
+  const movingMachinesSnapshot = useGameStore(s => s.movingMachinesSnapshot);
+  const movingConnectionsSnapshot = useGameStore(s => s.movingConnectionsSnapshot);
+
+  const show = (mode === GameMode.MOVE_SELECTION || mode === GameMode.BLUEPRINT_PLACE) && moveAnchor && hoverPos;
+  if (!show) return null;
+
+  const offsetX = hoverPos!.x - moveAnchor!.x;
+  const offsetY = hoverPos!.y - moveAnchor!.y;
+
+  const solidConns = movingConnectionsSnapshot.filter(c => c.portType === 'Solid');
+  const liquidConns = movingConnectionsSnapshot.filter(c => c.portType === 'Liquid');
+
+  return (
+    <>
+      {/* 机器虚影 */}
+      {movingMachinesSnapshot.map(m => {
+        const ghostX = m.x + offsetX;
+        const ghostY = m.y + offsetY;
+
+        return (
+          <div key={`ghost-${m.id}`} style={{ opacity: 0.6, pointerEvents: 'none' }}>
+            <Machine
+              data={{ ...m, x: ghostX, y: ghostY }}
+              isSelected={true}
+              isPowered={true}
+              zBase={Z_INDEX.BATCH_BASE}
+            />
+          </div>
+        );
+      })}
+
+      {/* Solid 批量连线虚影 */}
+      <BatchMoveConnectionsSVG
+        connections={solidConns.map(c => ({
+          ...c,
+          path: c.path.map(p => ({ x: p.x + offsetX, y: p.y + offsetY })),
+        }))}
+        portType="Solid"
+        zIndex={connZ(Z_INDEX.BATCH_BASE, portTypeToMask['Solid'])}
+      />
+
+      {/* Liquid 批量连线虚影 */}
+      <BatchMoveConnectionsSVG
+        connections={liquidConns.map(c => ({
+          ...c,
+          path: c.path.map(p => ({ x: p.x + offsetX, y: p.y + offsetY })),
+        }))}
+        portType="Liquid"
+        zIndex={connZ(Z_INDEX.BATCH_BASE, portTypeToMask['Liquid'])}
+      />
     </>
   );
 });
