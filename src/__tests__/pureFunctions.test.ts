@@ -448,9 +448,9 @@ describe('trySingleLRoute', () => {
 
     it('第二段遇障: 返回 null', () => {
         const grid = mkGrid(10, 10);
-        grid[4 * 10 + 5] = 1; // (5,4) blocked (first axis=right, corner at (5,2), then vertical to (5,4))
-        // Block (5,3) instead, which is on the vertical segment
-        grid[3 * 10 + 5] = 1; // (5,3) blocked on second segment
+        // 方向=1(右) L 形：先水平右到 corner(5,2)，再垂直下到终点(5,4)
+        // (5,3) 在垂直段上，阻挡它
+        grid[3 * 10 + 5] = 1;
         const path = trySingleLRoute({ x: 2, y: 2 }, { x: 5, y: 4 }, 1 as Direction, grid, 10, 10);
         expect(path).toBeNull();
     });
@@ -753,20 +753,19 @@ describe('findRouteToGround', () => {
         expect(result.isValid).toBe(false);
     });
 
-    it('路径被阻挡 → 视觉 fallback', () => {
+    it('主路径被阻挡时自动尝试备选 L 形', () => {
         const mergedGrid = new Uint8Array(gw * gh);
         const sameConnGrid = new Uint8Array(gw * gh);
         const cornerGrid = new Uint8Array(gw * gh);
         // 水平优先 L 形：从 (5,5) 先水平到 (10,5)，再垂直到 (10,8)
-        // 阻挡 (6,5)，即水平段第一步
+        // 阻挡 (6,5)，即水平段第一步 → 自动切换垂直优先备选
         mergedGrid[5 * gw + 6] = connMask;
         const result = findRouteToGround(
             { x: 5, y: 5 }, 1 as Direction, { x: 10, y: 8 }, 'auto',
             mergedGrid, sameConnGrid, cornerGrid, bridgeMask, connMask, gw, gh, false
         );
         // auto 模式会尝试备选 L 形——垂直优先：先下到 (5,8) 再右到 (10,8)
-        // 如果垂直优先也受阻才 fallback
-        // 这里只阻了水平方向(6,5)，垂直方向 (5,6) 应该通畅
+        // 这里只阻了水平方向，垂直方向通畅
         expect(result.isValid).toBe(true);
     });
 
