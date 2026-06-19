@@ -495,21 +495,18 @@ Phase 5 ─ 依赖 Phase 3+4 代码稳定
 
 ### 🟡 中优先级（质量 / 开发者体验）
 
-**#4 — `body` 引用了从未加载的 'Inter' 字体**
-`src/index.css:28`：`font-family: 'Inter', system-ui, ...` — Inter 无 CDN link、无 @font-face、无 npm 包。每次都走 system-ui fallback。且 Inter 不含中文字形，即使加载也立即回退。
-- 修法：删掉 `'Inter'`，直接 `font-family: system-ui, ...`
-- 预估：30 秒
+**✅ #4 — `body` 引用了从未加载的 'Inter' 字体 — 已完成 (2026-06-19)**
+`src/index.css:28`：删掉 `'Inter'`，直接 `font-family: system-ui, ...`
 
 **#5 — `connectionSlice.ts`（385 行）仍有拆分空间**
 `updatePreview` 已拆出 5 个纯函数，但 `commitConnection`（交叉检测+桥生成+连线分割+合并+续接）仍是一个 100+ 行函数耦合在 store action 里。
 - 修法：抽 `findCrossings` / `generateBridgeAt` / `splitAndMerge` 三个纯函数，`commitConnection` 瘦身为编排层
 - 注意：CLAUDE.md 搁置区已标注"逻辑仍在快速变化"，当前继续搁置
 
-**#6 — 2 处可消除的 eslint-disable**
-① `App.tsx:164` — `react-hooks/refs`：`handleTriggerSaveRef.current = ...` 是 React 18 惯用法遗留。React 19 + Zustand `getState()` 可在 effect 内直接读最新状态，无需 ref 中转。
-② `ShareModal.tsx:68` — `react-hooks/exhaustive-deps`：effect 故意不把 `handleGenerate` 放入 deps。改为 effect 内用 `getState()` 取值，依赖数组可完整。
-- 预估：30 分钟
-- 注：`App.tsx:95` 处初始化 effect（只跑一次）保留 disable，加注释说明即可
+**✅ #6 — 2 处可消除的 eslint-disable — 已完成 (2026-06-19)**
+① `App.tsx` — 删除 `handleTriggerSaveRef` ref 中转，`handleTriggerSave`/`handleSaveAs` 改用 `getState()` 读取最新状态（稳定引用、空依赖）；组件减少 7 个 selector 订阅。
+② `ShareModal.tsx` — 改用 key-remount 模式（弹窗打开=组件挂载），`handleGenerate` 通过 `getState()` 读取 store；保留一处 `set-state-in-effect` disable（挂载初始化数据获取是 effect 的正当用途）。
+附加收益：`App.tsx:95` 初始化 effect 保留 disable 并加注释说明。
 
 ### 🟢 低优先级（锦上添花）
 
@@ -518,10 +515,8 @@ Phase 5 ─ 依赖 Phase 3+4 代码稳定
 - 修法：对比 `config/materials.ts` 的 icon ID → 删除不匹配文件，或收窄预加载列表
 - 预估：20 分钟，减约 150-300KB
 
-**#8 — `index.html` 缺 meta 标签**
-无 `description`、OG 标签、`theme-color`。分享链接只是一条光秃秃的 URL。
-- 修法：添加 `<meta name="description">`、`og:title/description/image`、`theme-color`
-- 预估：5 分钟
+**✅ #8 — `index.html` 缺 meta 标签 — 已完成 (2026-06-19)**
+已添加 `description`、`og:title/description/image/type`、`theme-color` meta 标签
 
 **#9 — `vite.config.ts` 无生产分包策略**
 所有依赖和业务代码打包为一个 JS bundle。业务代码一行改动就让用户重新下载整个 vendor。
@@ -537,12 +532,12 @@ Phase 5 ─ 依赖 Phase 3+4 代码稳定
 ### 建议执行顺序（2026-06-19）
 
 ```
-第一波 随手清（5 分钟）
-  #4  删掉幽灵 'Inter'               30s
-  #8  补 meta 标签                    5min
+第一波 随手清 ✅ 已完成
+  #4  删掉幽灵 'Inter'               30s  ✅
+  #8  补 meta 标签                    5min  ✅
 
-第二波 质量收尾（30 分钟）
-  #6  消除 2 处 eslint-disable        30min
+第二波 质量收尾 ✅ 已完成
+  #6  消除 2 处 eslint-disable        30min  ✅
 
 第三波 构建优化（40 分钟）
   #9  vite 分包策略                   10min
@@ -558,10 +553,10 @@ Phase 5 ─ 依赖 Phase 3+4 代码稳定
 |---|------|----------|------|------|
 | 1 | logo 压缩 + lang 修复 | index.html + Header + LoadingScreen | 15min | ✅ 已完成 |
 | 2 | 字体子集化 | public/fonts/ | 30min | 🔵 待开始 |
-| 4 | 删幽灵 Inter | index.css | 30s | 🔵 待开始 |
-| 6 | eslint-disable 消除 | App.tsx + ShareModal.tsx | 30min | 🔵 待开始 |
+| 4 | 删幽灵 Inter | index.css | 30s | ✅ 已完成 |
+| 6 | eslint-disable 消除 | App.tsx + ShareModal.tsx | 30min | ✅ 已完成 |
 | 7 | 多余图标清理 | assets/items/ | 20min | 🔵 待开始 |
-| 8 | 补 meta 标签 | index.html | 5min | 🔵 待开始 |
+| 8 | 补 meta 标签 | index.html | 5min | ✅ 已完成 |
 | 9 | vite 分包 | vite.config.ts | 10min | 🔵 待开始 |
 
 ## 部署

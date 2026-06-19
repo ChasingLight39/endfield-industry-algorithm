@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Toaster, Toast } from '@chakra-ui/react';
 import { useGameStore } from './store/gameStore';
 import { useChineseConverter } from './hooks/useChineseConverter';
@@ -21,18 +21,11 @@ const About = lazy(() => import('./components/About').then(m => ({ default: m.Ab
 const Settings = lazy(() => import('./components/Settings').then(m => ({ default: m.Settings })));
 
 export default function App() {
-  // ── 细粒度 store selector ──
-  const machines = useGameStore(s => s.machines);
-  const connections = useGameStore(s => s.connections);
-  const currentBlueprintId = useGameStore(s => s.currentBlueprintId);
-  const currentBlueprintName = useGameStore(s => s.currentBlueprintName);
+  // ── 细粒度 store selector（仅订阅渲染所需的动作和状态） ──
   const loadGame = useGameStore(s => s.loadGame);
   const resetGame = useGameStore(s => s.resetGame);
-  const setCurrentBlueprint = useGameStore(s => s.setCurrentBlueprint);
   const undo = useGameStore(s => s.undo);
   const redo = useGameStore(s => s.redo);
-  const selectedMachineIds = useGameStore(s => s.selectedMachineIds);
-  const selectedConnectionIds = useGameStore(s => s.selectedConnectionIds);
   const uiView = useGameStore(s => s.uiView);
   const setUiView = useGameStore(s => s.setUiView);
   const blueprintListMode = useGameStore(s => s.blueprintListMode);
@@ -92,55 +85,46 @@ export default function App() {
     }
 
     handleCreateNew();
-  })(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // 初始化逻辑，仅在挂载时执行一次 — 不添加 handleCreateNew/handleLoadBlueprint/loadGame/setUiView 到依赖数组
+  })(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // ── 提取选区数据 ──
-  const extractSelectionData = useCallback((): Blueprint['data'] | null => {
-    if (selectedMachineIds.length === 0 && selectedConnectionIds.length === 0) return null;
-
-    const selectedMachines = machines.filter(m => selectedMachineIds.includes(m.id));
-    const selectedConnections = connections.filter(c => selectedConnectionIds.includes(c.id));
-
-    if (selectedMachines.length === 0 && selectedConnections.length === 0) return null;
-
-    const bb = getBoundingBox(selectedMachines, selectedConnections);
-    if (bb.width === 0 && bb.height === 0) return null;
-
-    const offsetX = bb.minX;
-    const offsetY = bb.minY;
-
-    const newMachines = selectedMachines.map(m => ({
-      ...m,
-      id: crypto.randomUUID(),
-      x: m.x - offsetX,
-      y: m.y - offsetY
-    }));
-
-    const newConnections = selectedConnections.map(c => ({
-      ...c,
-      id: crypto.randomUUID(),
-      path: c.path.map(p => ({ x: p.x - offsetX, y: p.y - offsetY }))
-    }));
-
-    return {
-      machines: newMachines,
-      connections: newConnections,
-      actualWidth: bb.width,
-      actualHeight: bb.height
-    };
-  }, [machines, connections, selectedMachineIds, selectedConnectionIds]);
-
-  // ── 保存逻辑 ──
+  // ── 保存逻辑（通过 getState() 读取最新 store 状态，引用稳定） ──
   const handleTriggerSave = useCallback(() => {
+    const { machines, connections, selectedMachineIds, selectedConnectionIds, currentBlueprintId, currentBlueprintName } = useGameStore.getState();
+
+    // 有选区 → 提取选区数据另存
     if (selectedMachineIds.length > 0 || selectedConnectionIds.length > 0) {
-      const selectionData = extractSelectionData();
-      if (selectionData) {
-        setPendingSaveData(selectionData);
-        setIsSaveDialogOpen(true);
-        return;
+      const selectedMachines = machines.filter(m => selectedMachineIds.includes(m.id));
+      const selectedConnections = connections.filter(c => selectedConnectionIds.includes(c.id));
+
+      if (selectedMachines.length > 0 || selectedConnections.length > 0) {
+        const bb = getBoundingBox(selectedMachines, selectedConnections);
+        if (bb.width > 0 || bb.height > 0) {
+          const offsetX = bb.minX;
+          const offsetY = bb.minY;
+          setPendingSaveData({
+            machines: selectedMachines.map(m => ({
+              ...m,
+              id: crypto.randomUUID(),
+              x: m.x - offsetX,
+              y: m.y - offsetY
+            })),
+            connections: selectedConnections.map(c => ({
+              ...c,
+              id: crypto.randomUUID(),
+              path: c.path.map(p => ({ x: p.x - offsetX, y: p.y - offsetY }))
+            })),
+            actualWidth: bb.width,
+            actualHeight: bb.height
+          });
+          setIsSaveDialogOpen(true);
+          return;
+        }
       }
     }
 
+    // 无选区 → 直接覆盖保存当前蓝图
     if (currentBlueprintId && currentBlueprintName) {
       const { width, height } = calculateContentDimensions(machines, connections);
       saveBlueprint(currentBlueprintId, currentBlueprintName, {
@@ -157,14 +141,9 @@ export default function App() {
     } else {
       setIsSaveDialogOpen(true);
     }
-  }, [machines, connections, currentBlueprintId, currentBlueprintName, selectedMachineIds, selectedConnectionIds, extractSelectionData]);
+  }, []);
 
-  // 用 ref 持有最新 handleTriggerSave，避免键盘 effect 依赖频繁变化的值
-  const handleTriggerSaveRef = useRef(handleTriggerSave);
-  // eslint-disable-next-line react-hooks/refs
-  handleTriggerSaveRef.current = handleTriggerSave;
-
-  // ── 全局快捷键（仅注册一次，通过 getState/ref 读取最新状态） ──
+  // ── 全局快捷键 ──
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl+Z (Undo)
@@ -186,13 +165,13 @@ export default function App() {
       // Ctrl+S
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        handleTriggerSaveRef.current();
+        handleTriggerSave();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]); // undo/redo 是 Zustand action，引用稳定 → effect 仅执行一次
+  }, [undo, redo, handleTriggerSave]); // 三者均为稳定引用 → effect 仅执行一次
 
   const handleSaveAs = useCallback((name: string) => {
     if (pendingSaveData) {
@@ -204,6 +183,7 @@ export default function App() {
       });
       setPendingSaveData(null);
     } else {
+      const { machines, connections, setCurrentBlueprint } = useGameStore.getState();
       const { width, height } = calculateContentDimensions(machines, connections);
       const newBp = saveBlueprint(null, name, {
         machines,
@@ -220,7 +200,7 @@ export default function App() {
       });
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [pendingSaveData, machines, connections, setCurrentBlueprint]);
+  }, [pendingSaveData]);
 
   const handleOpenList = useCallback(() => {
     setBlueprintListMode('manage');

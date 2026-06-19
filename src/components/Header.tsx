@@ -19,6 +19,7 @@ import { useState } from 'react';
 export const Header = ({ onSave, onOpen }: HeaderProps) => {
     const { gridWidth, gridHeight, setGridSize, setUiView, setPan, setZoom } = useGameStore();
     const [isShareOpen, setIsShareOpen] = useState(false);
+    const [shareKey, setShareKey] = useState(0);
 
     const gridPresetsCollection = createListCollection({
         items: GRID_PRESETS.map(p => ({ label: p.label, value: `${p.width}x${p.height}` })),
@@ -67,12 +68,12 @@ export const Header = ({ onSave, onOpen }: HeaderProps) => {
                     <IconButton icon="material-symbols:fit-screen" tooltip="重置视图" onClick={() => { setPan({ x: 0, y: 0 }); setZoom(1); }} />
                     <IconButton icon="material-symbols:save" tooltip="保存" onClick={onSave} />
                     <IconButton icon="typcn:home" tooltip="蓝图列表" onClick={onOpen} />
-                    <IconButton icon="material-symbols:share" tooltip="分享" onClick={() => setIsShareOpen(true)} />
+                    <IconButton icon="material-symbols:share" tooltip="分享" onClick={() => { setIsShareOpen(true); setShareKey(k => k + 1); }} />
                     <IconButton icon="material-symbols:settings" tooltip="设置" onClick={() => setUiView('settings')} />
                     <IconButton icon="material-symbols:info-i-rounded" tooltip="关于" onClick={() => setUiView('about')} />
                 </div>
             </div>
-            <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} />
+            {isShareOpen && <ShareModal key={shareKey} onClose={() => setIsShareOpen(false)} />}
         </>
     );
 };

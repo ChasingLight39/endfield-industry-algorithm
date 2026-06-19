@@ -9,7 +9,7 @@ import {
     Text,
     Spinner,
 } from '@chakra-ui/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { captureBlueprintScreenshot, generateShareUrl } from '../utils/shareUtils';
 import { toaster } from '../utils/toaster';
 import { useGameStore } from '../store/gameStore';
@@ -17,56 +17,39 @@ import { IconButton } from "@chakra-ui/react"
 import { Icon } from '@iconify/react';
 
 interface ShareModalProps {
-    isOpen: boolean;
     onClose: () => void;
 }
 
-export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
+export const ShareModal = ({ onClose }: ShareModalProps) => {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [shareLink, setShareLink] = useState<string>('');
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const { machines, connections, gridWidth, gridHeight } = useGameStore();
-
-    const handleGenerate = async () => {
+    const handleGenerate = useCallback(async () => {
         setIsGenerating(true);
         try {
-            // 1. 生成链接
-            const data = {
-                machines,
-                connections,
-                gridWidth,
-                gridHeight,
-                // 加载时我们会重新建立 '实际' 尺寸...
-                // 解析逻辑需要处理此数据结构
-            };
-            const url = generateShareUrl(data);
+            const { machines, connections } = useGameStore.getState();
+            const url = generateShareUrl({ machines, connections });
             setShareLink(url);
 
-            // 2. 生成截图 — 等待下一帧确保 DOM 稳定
             requestAnimationFrame(async () => {
                 const img = await captureBlueprintScreenshot();
                 setImageUrl(img);
                 setIsGenerating(false);
             });
-
         } catch (e) {
             console.error(e);
             toaster.create({ title: '生成分享信息失败', type: 'error' });
             setIsGenerating(false);
         }
-    };
+    }, []);
 
+    // 组件挂载 = 弹窗打开 → 生成分享数据；父组件通过 key 控制挂载/卸载
     useEffect(() => {
-        if (isOpen) {
-            handleGenerate();
-        } else {
-            // 清理
-            setImageUrl(null);
-            setShareLink('');
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen]);
+        // set-state-in-effect：挂载初始化数据获取是 effect 的正当用途
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        handleGenerate();
+    }, [handleGenerate]);
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(shareLink);
@@ -84,10 +67,9 @@ export const ShareModal = ({ isOpen, onClose }: ShareModalProps) => {
         }
     };
 
-    if (!isOpen) return null;
-
+    // open 恒为 true：组件存在即弹窗打开，关闭由父组件卸载此组件实现（Header 通过 key 控制挂载/卸载）
     return (
-        <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} size="lg">
+        <Dialog.Root open={true} onOpenChange={(e) => !e.open && onClose()} size="lg">
             <Dialog.Backdrop />
             <Dialog.Positioner>
                 <Dialog.Content backgroundColor="var(--gray-light)">
