@@ -472,6 +472,98 @@ Phase 5 ─ 依赖 Phase 3+4 代码稳定
 | 8 | 占用网格缓存 | connectionSlice | 1h | ✅ 已完成 |
 | 10 | 寻路边界测试 | __tests__/ | 1h | ✅ 已完成 |
 
+---
+
+## 当前改进方向（2026-06-19 扫描更新）
+
+9 个新问题（`4dcba4e` 已完成 #1 和 #3 的部分）。
+
+### 🔴 高优先级（影响性能 / 正确性）
+
+**✅ #1 — logo 压缩 — 已完成 (2026-06-19)**
+`public/logo.png` 1.5MB → 删除未使用的 `src/assets/logo.png`，新建 3 个优化文件：
+- `public/favicon.png` 2.4KB（48×48，palette+压缩等级9）
+- `src/assets/logo-header.png` 7.8KB（96px高，2x retina）
+- `public/logo.svg` 156KB（从 git 历史恢复，LoadingScreen 使用）
+- 附带修复 `index.html`：`lang="en"` → `lang="zh"`、`type="image/svg+xml"` 指向 PNG 的 MIME 矛盾
+
+**#2 — NaikaiFont-Bold.woff2 17MB**
+`public/fonts/NaikaiFont-Bold.woff2` 完整 CJK 字体（~2万汉字+日韩字符），实际只用 200-500 个不同汉字。
+- 方案A（推荐）：`glyphhanger` 扫描 `src/` 提取用到的字符 → 子集化 woff2，预估 17MB→2-5MB
+- 方案B：如字体有版权顾虑，删 `@font-face` + `public/fonts/`，改用系统字体栈 `"Microsoft YaHei", "PingFang SC", "Noto Sans SC"`，17MB→0
+- 预估：30 分钟
+
+### 🟡 中优先级（质量 / 开发者体验）
+
+**#4 — `body` 引用了从未加载的 'Inter' 字体**
+`src/index.css:28`：`font-family: 'Inter', system-ui, ...` — Inter 无 CDN link、无 @font-face、无 npm 包。每次都走 system-ui fallback。且 Inter 不含中文字形，即使加载也立即回退。
+- 修法：删掉 `'Inter'`，直接 `font-family: system-ui, ...`
+- 预估：30 秒
+
+**#5 — `connectionSlice.ts`（385 行）仍有拆分空间**
+`updatePreview` 已拆出 5 个纯函数，但 `commitConnection`（交叉检测+桥生成+连线分割+合并+续接）仍是一个 100+ 行函数耦合在 store action 里。
+- 修法：抽 `findCrossings` / `generateBridgeAt` / `splitAndMerge` 三个纯函数，`commitConnection` 瘦身为编排层
+- 注意：CLAUDE.md 搁置区已标注"逻辑仍在快速变化"，当前继续搁置
+
+**#6 — 2 处可消除的 eslint-disable**
+① `App.tsx:164` — `react-hooks/refs`：`handleTriggerSaveRef.current = ...` 是 React 18 惯用法遗留。React 19 + Zustand `getState()` 可在 effect 内直接读最新状态，无需 ref 中转。
+② `ShareModal.tsx:68` — `react-hooks/exhaustive-deps`：effect 故意不把 `handleGenerate` 放入 deps。改为 effect 内用 `getState()` 取值，依赖数组可完整。
+- 预估：30 分钟
+- 注：`App.tsx:95` 处初始化 effect（只跑一次）保留 disable，加注释说明即可
+
+### 🟢 低优先级（锦上添花）
+
+**#7 — `assets/items/` 132 个图标 vs 76 种材料**
+多了 56 个未使用的 webp 文件。`LoadingScreen` 启动时全部预加载。
+- 修法：对比 `config/materials.ts` 的 icon ID → 删除不匹配文件，或收窄预加载列表
+- 预估：20 分钟，减约 150-300KB
+
+**#8 — `index.html` 缺 meta 标签**
+无 `description`、OG 标签、`theme-color`。分享链接只是一条光秃秃的 URL。
+- 修法：添加 `<meta name="description">`、`og:title/description/image`、`theme-color`
+- 预估：5 分钟
+
+**#9 — `vite.config.ts` 无生产分包策略**
+所有依赖和业务代码打包为一个 JS bundle。业务代码一行改动就让用户重新下载整个 vendor。
+- 修法：`manualChunks` 分离 `vendor-react` / `vendor-chakra` / `vendor-state` / `vendor-icons`
+- 预估：10 分钟
+
+### 🔵 继续搁置
+
+- `commitConnection` 重构（#5）— 逻辑仍在快速变化
+- 分享格式版本字节 — 当前未上线，未来重新设计分享格式时一并处理
+- 重复材料图标（#7 之外）— 需游戏数据人工对照
+
+### 建议执行顺序（2026-06-19）
+
+```
+第一波 随手清（5 分钟）
+  #4  删掉幽灵 'Inter'               30s
+  #8  补 meta 标签                    5min
+
+第二波 质量收尾（30 分钟）
+  #6  消除 2 处 eslint-disable        30min
+
+第三波 构建优化（40 分钟）
+  #9  vite 分包策略                   10min
+  #2  字体子集化                      30min
+
+第四波 锦上添花（20 分钟）
+  #7  清理多余图标                    20min
+```
+
+**搁置**：#5（connectionSlice 拆分，等逻辑稳定）
+
+| # | 方向 | 影响范围 | 估计 | 状态 |
+|---|------|----------|------|------|
+| 1 | logo 压缩 + lang 修复 | index.html + Header + LoadingScreen | 15min | ✅ 已完成 |
+| 2 | 字体子集化 | public/fonts/ | 30min | 🔵 待开始 |
+| 4 | 删幽灵 Inter | index.css | 30s | 🔵 待开始 |
+| 6 | eslint-disable 消除 | App.tsx + ShareModal.tsx | 30min | 🔵 待开始 |
+| 7 | 多余图标清理 | assets/items/ | 20min | 🔵 待开始 |
+| 8 | 补 meta 标签 | index.html | 5min | 🔵 待开始 |
+| 9 | vite 分包 | vite.config.ts | 10min | 🔵 待开始 |
+
 ## 部署
 
 - Cloudflare Pages（`public/_redirects` 配置 SPA 回退：`/* /index.html 200`）
