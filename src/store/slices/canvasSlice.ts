@@ -1,8 +1,8 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasSlice, GameState } from './types';
-import { MACHINES } from '../../config/machines';
-import { getRotatedDimensions } from '../../utils/machineUtils';
-import { getMachinePortCheckPositions } from '../../utils/grid';
+import { MACHINES } from '@/config/machines';
+import { getRotatedDimensions } from '@/utils/machineUtils';
+import { getMachinePortCheckPositions } from '@/utils/grid';
 
 export const createCanvasSlice: StateCreator<GameState, [], [], CanvasSlice> = (set, get) => ({
     zoom: 1,

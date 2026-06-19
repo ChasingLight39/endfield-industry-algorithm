@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
-import { useGameStore } from '../store/gameStore';
-import { GameMode } from '../types';
-import type { Point } from '../types';
+import { useGameStore } from '@/store/gameStore';
+import { GameMode } from '@/types';
+import type { Point } from '@/types';
 import { usePanZoom } from './grid/usePanZoom';
 import { useWireMode } from './grid/useWireMode';
 import { useSelectionMode } from './grid/useSelectionMode';

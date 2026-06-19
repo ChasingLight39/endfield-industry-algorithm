@@ -116,7 +116,7 @@ src/
 │       ├── tooltip.tsx               # Chakra Tooltip封装：支持showArrow/portalled/portalRef/contentProps，disabled时直接返回children
 │       └── About.scss               # .member-icon-btn hover变黄
 ├── assets/
-│   ├── logo.png                      # 48px logo
+│   ├── logo-header.png               # Header 用的 96px 高 logo（2x retina）
 │   ├── loading.png                   # 加载画面右侧图(240px)
 │   ├── members/                      # 团队成员头像 (author.gif, tata.png)
 │   ├── machines/                     # 机器图标 .webp (以machine.id命名, 如pco.webp)

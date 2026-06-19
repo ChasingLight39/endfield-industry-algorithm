@@ -1,7 +1,7 @@
-import type { PlacedMachine, Point } from '../../types';
-import { portTypeToMask } from '../../types';
-import { MACHINES } from '../../config/machines';
-import { getRotatedDimensions, getMachineCellMask } from '../machineUtils';
+import type { PlacedMachine, Point } from '@/types';
+import { portTypeToMask } from '@/types';
+import { MACHINES } from '@/config/machines';
+import { getRotatedDimensions, getMachineCellMask } from '@/utils/machineUtils';
 
 /** 获取机器旋转后的矩形 */
 export const getMachineRect = (machine: PlacedMachine) => {

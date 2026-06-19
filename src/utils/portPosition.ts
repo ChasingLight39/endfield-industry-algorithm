@@ -1,5 +1,5 @@
-import type { Point, PortConfig, Side } from '../types';
-import { GRID_SIZE, PORT_ARROW_ROTATION } from '../config/constants';
+import type { Point, PortConfig, Side } from '@/types';
+import { GRID_SIZE, PORT_ARROW_ROTATION } from '@/config/constants';
 
 /** 端口中心在格子内的像素偏移量
  *  推导: 20(GRID_SIZE/2) - 3(容器padding) - 2(容器border) - 3(机身border) = 12 */

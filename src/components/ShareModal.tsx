@@ -10,9 +10,9 @@ import {
     Spinner,
 } from '@chakra-ui/react';
 import { useState, useEffect, useCallback } from 'react';
-import { captureBlueprintScreenshot, generateShareUrl } from '../utils/shareUtils';
-import { toaster } from '../utils/toaster';
-import { useGameStore } from '../store/gameStore';
+import { captureBlueprintScreenshot, generateShareUrl } from '@/utils/shareUtils';
+import { toaster } from '@/utils/toaster';
+import { useGameStore } from '@/store/gameStore';
 import { IconButton } from "@chakra-ui/react"
 import { Icon } from '@iconify/react';
 

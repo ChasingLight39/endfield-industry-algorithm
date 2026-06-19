@@ -1,12 +1,12 @@
 import { createListCollection, Select } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
 import './Header.scss';
-import logoIcon from '../assets/logo-header.png';
+import logoIcon from '@/assets/logo-header.png';
 
 import { IconButton } from './IconButton';
 
-import { GRID_PRESETS } from '../config/constants';
-import { useGameStore } from '../store/gameStore';
+import { GRID_PRESETS } from '@/config/constants';
+import { useGameStore } from '@/store/gameStore';
 
 interface HeaderProps {
     onSave: () => void;

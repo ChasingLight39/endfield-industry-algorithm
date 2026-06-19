@@ -1,4 +1,4 @@
-import type { Point, Direction } from '../../types';
+import type { Point, Direction } from '@/types';
 
 // 方向 → 单位向量
 export const getVectorFromSide = (side: 'top' | 'right' | 'bottom' | 'left'): Point => {

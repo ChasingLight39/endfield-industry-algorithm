@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
-import { useGameStore } from '../store/gameStore';
-import { GameMode } from '../types';
-import { GRID_SIZE } from '../config/constants';
+import { useGameStore } from '@/store/gameStore';
+import { GameMode } from '@/types';
+import { GRID_SIZE } from '@/config/constants';
 
 /** DEVICE_SELECT 模式下的框选矩形 */
 export const SelectionBox: React.FC = memo(() => {

@@ -12,10 +12,10 @@ import {
     validateRouteConflicts,
     findRouteForMachine,
     findRouteToGround,
-} from '../utils/grid';
-import { getRotatedPorts, getRotatedDimensions } from '../utils/machineUtils';
-import type { Connection, Direction, PortConfig, PortType, PlacedMachine } from '../types';
-import { MASK_SOLID_LOGISTICS } from '../types';
+} from '@/utils/grid';
+import { getRotatedPorts, getRotatedDimensions } from '@/utils/machineUtils';
+import type { Connection, Direction, PortConfig, PortType, PlacedMachine } from '@/types';
+import { MASK_SOLID_LOGISTICS } from '@/types';
 
 // ─── helpers ───
 

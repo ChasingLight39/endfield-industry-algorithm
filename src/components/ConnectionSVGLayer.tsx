@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
 import classNames from 'classnames';
-import { useGameStore } from '../store/gameStore';
-import type { PortType } from '../types';
-import { portTypeToMask } from '../types';
-import { GRID_SIZE } from '../config/constants';
-import { Z_INDEX, connZ } from '../config/zIndex';
-import { pathToPoints } from '../utils/portPosition';
+import { useGameStore } from '@/store/gameStore';
+import type { PortType } from '@/types';
+import { portTypeToMask } from '@/types';
+import { GRID_SIZE } from '@/config/constants';
+import { Z_INDEX, connZ } from '@/config/zIndex';
+import { pathToPoints } from '@/utils/portPosition';
 
 interface ConnectionSVGLayerProps {
   /** 仅渲染该类型的连线，不传则渲染全部 */

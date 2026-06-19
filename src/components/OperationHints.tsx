@@ -1,6 +1,6 @@
 import { Icon } from '@iconify/react';
-import { useGameStore } from '../store/gameStore';
-import { GameMode } from '../types';
+import { useGameStore } from '@/store/gameStore';
+import { GameMode } from '@/types';
 import './OperationHints.scss';
 
 export const OperationHints = () => {

@@ -1,10 +1,10 @@
 import type { StateCreator } from 'zustand';
 import type { SelectionSlice, GameState } from './types';
-import type { PlacedMachine, Connection, Point } from '../../types';
-import { GameMode, portTypeToMask } from '../../types';
-import { MACHINES } from '../../config/machines';
-import { getMachinePortCheckPositions, getBoundingBox, getCornerPoints, splitConnectionAt } from '../../utils/grid';
-import { getRotatedDimensions, getMachineCellMask, getMachineMask } from '../../utils/machineUtils';
+import type { PlacedMachine, Connection, Point } from '@/types';
+import { GameMode, portTypeToMask } from '@/types';
+import { MACHINES } from '@/config/machines';
+import { getMachinePortCheckPositions, getBoundingBox, getCornerPoints, splitConnectionAt } from '@/utils/grid';
+import { getRotatedDimensions, getMachineCellMask, getMachineMask } from '@/utils/machineUtils';
 
 export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlice> = (set, get) => ({
     selectionStart: null,

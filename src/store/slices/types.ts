@@ -1,5 +1,5 @@
-import type { Point, PlacedMachine, Connection, Direction, PortType } from '../../types';
-import type { GameMode } from '../../types';
+import type { Point, PlacedMachine, Connection, Direction, PortType } from '@/types';
+import type { GameMode } from '@/types';
 
 export interface HistorySnapshot {
     machines: PlacedMachine[];

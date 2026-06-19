@@ -1,5 +1,5 @@
-import type { MachineConfig } from '../types';
-import { MASK_SOLID_LOGISTICS, MASK_LIQUID_LOGISTICS, MASK_REGULAR_MACHINE } from '../types';
+import type { MachineConfig } from '@/types';
+import { MASK_SOLID_LOGISTICS, MASK_LIQUID_LOGISTICS, MASK_REGULAR_MACHINE } from '@/types';
 /*顺序：
 协议核心
 物流桥，分流器，汇流器，物品准入口，管道桥，管道分流器，管道汇流器，管道准入口，

@@ -2,9 +2,9 @@
 import { Box, VStack, Text, Button, IconButton, Flex, Drawer, Badge } from '@chakra-ui/react';
 import { FilePlus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { type Blueprint, deleteBlueprint, getBlueprints } from '../utils/storage';
+import { type Blueprint, deleteBlueprint, getBlueprints } from '@/utils/storage';
 
-import { useGameStore } from '../store/gameStore';
+import { useGameStore } from '@/store/gameStore';
 
 interface BlueprintListProps {
     onSelect: (blueprint: Blueprint) => void;

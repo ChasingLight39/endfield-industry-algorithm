@@ -1,7 +1,7 @@
-import type { PlacedMachine, Connection, PortType } from '../../types';
-import { portTypeToMask } from '../../types';
-import { MACHINES } from '../../config/machines';
-import { getRotatedDimensions, getMachineCellMask } from '../machineUtils';
+import type { PlacedMachine, Connection, PortType } from '@/types';
+import { portTypeToMask } from '@/types';
+import { MACHINES } from '@/config/machines';
+import { getRotatedDimensions, getMachineCellMask } from '@/utils/machineUtils';
 import { getCornerPoints } from './port';
 
 /** 构建连线占用矩阵 (0=空, 1=被连线占用), 可选按 portType 过滤 */

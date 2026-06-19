@@ -1,11 +1,11 @@
 import { Box, Text, Flex, Heading, CloseButton, IconButton } from '@chakra-ui/react';
 import { Tooltip } from "@/components/ui/tooltip"
-import { useGameStore } from '../store/gameStore';
-import { memberInfo } from '../config/memberInfo';
-import { MAX_MEMBERS_DISPLAY } from '../config/constants';
+import { useGameStore } from '@/store/gameStore';
+import { memberInfo } from '@/config/memberInfo';
+import { MAX_MEMBERS_DISPLAY } from '@/config/constants';
 import { Icon } from '@iconify/react';
 import "@/components/ui/About.scss"
-import { toaster } from '../utils/toaster';
+import { toaster } from '@/utils/toaster';
 
 export const About = () => {
     const { setUiView } = useGameStore();

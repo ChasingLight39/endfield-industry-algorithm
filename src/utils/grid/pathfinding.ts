@@ -1,4 +1,4 @@
-import type { Point, Direction } from '../../types';
+import type { Point, Direction } from '@/types';
 
 /** 8 分区曼哈顿路由: L 形直角折线，遇障碍自动换另一条路 */
 export const routeManhattan = (

@@ -1,6 +1,6 @@
-import type { Direction, PortConfig, PlacedMachine, MachineConfig } from '../types';
-import { MASK_REGULAR_MACHINE } from '../types';
-import { MACHINES } from '../config/machines';
+import type { Direction, PortConfig, PlacedMachine, MachineConfig } from '@/types';
+import { MASK_REGULAR_MACHINE } from '@/types';
+import { MACHINES } from '@/config/machines';
 
 /** 从配置读取机器渲染掩码（全同模式返回原值，差异模式返回 max） */
 export const getMachineMask = (machineId: string): number => {

@@ -1,7 +1,7 @@
 import { render, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { useChineseConverter } from '../hooks/useChineseConverter';
-import { useSettingsStore } from '../store/settingsStore';
+import { useChineseConverter } from '@/hooks/useChineseConverter';
+import { useSettingsStore } from '@/store/settingsStore';
 
 // Mock opencc-js 动态导入
 const mockConverter = vi.fn((text: string) => {

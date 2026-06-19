@@ -1,7 +1,7 @@
-import type { Point, PlacedMachine, Connection, Direction, PortType } from '../../types';
-import { sideToDir } from '../../types';
-import { MACHINES } from '../../config/machines';
-import { getRotatedDimensions, getRotatedPorts } from '../machineUtils';
+import type { Point, PlacedMachine, Connection, Direction, PortType } from '@/types';
+import { sideToDir } from '@/types';
+import { MACHINES } from '@/config/machines';
+import { getRotatedDimensions, getRotatedPorts } from '@/utils/machineUtils';
 import { getVectorFromSide, dirFromPoints } from './direction';
 
 /**

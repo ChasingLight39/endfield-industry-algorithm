@@ -1,4 +1,4 @@
-import type { PlacedMachine, Connection } from '../types';
+import type { PlacedMachine, Connection } from '@/types';
 
 export interface Blueprint {
     id: string;

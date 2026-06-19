@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useGameStore } from '../store/gameStore';
-import { GameMode } from '../types';
-import type { PlacedMachine, Connection, Direction } from '../types';
+import { useGameStore } from '@/store/gameStore';
+import { GameMode } from '@/types';
+import type { PlacedMachine, Connection, Direction } from '@/types';
 
 /** 创建一台测试用的 1x1 机器（物流桥，不占大空间） */
 const makeLBR = (overrides: Partial<PlacedMachine> = {}): PlacedMachine => ({

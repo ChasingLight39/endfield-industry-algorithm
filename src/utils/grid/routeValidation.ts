@@ -1,5 +1,5 @@
-import type { Point, Direction, PortType, PlacedMachine } from '../../types';
-import { sideToDir } from '../../types';
+import type { Point, Direction, PortType, PlacedMachine } from '@/types';
+import { sideToDir } from '@/types';
 import { trySingleLRoute } from './pathfinding';
 import { computeHeadFacing } from './direction';
 import { getInputPortOuterCells } from './port';

@@ -1,7 +1,6 @@
 import { Box, Flex, Heading, CloseButton, Tabs } from '@chakra-ui/react';
-import { useGameStore } from '../store/gameStore';
-import { useSettingsStore, type Language } from '../store/settingsStore';
-import "@/components/ui/About.scss";
+import { useGameStore } from '@/store/gameStore';
+import { useSettingsStore, type Language } from '@/store/settingsStore';
 
 export const Settings = () => {
     const { setUiView } = useGameStore();

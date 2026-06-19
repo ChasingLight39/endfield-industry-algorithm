@@ -1,15 +1,15 @@
 import React, { useRef, useCallback, useMemo, memo } from 'react';
 import { Icon } from '@iconify/react';
 import classNames from 'classnames';
-import { GameMode } from '../types';
-import type { PlacedMachine } from '../types';
-import { getMachineConfig } from '../config/machines';
-import { useGameStore } from '../store/gameStore';
+import { GameMode } from '@/types';
+import type { PlacedMachine } from '@/types';
+import { getMachineConfig } from '@/config/machines';
+import { useGameStore } from '@/store/gameStore';
 import './Machine.scss';
-import { getRotatedDimensions, getRotatedPorts, getMachineMask } from '../utils/machineUtils';
-import { Z_INDEX, machineZ } from '../config/zIndex';
-import { getPortStyle } from '../utils/portPosition';
-import { machinePositionStyle } from '../styles/cssCustomProps';
+import { getRotatedDimensions, getRotatedPorts, getMachineMask } from '@/utils/machineUtils';
+import { Z_INDEX, machineZ } from '@/config/zIndex';
+import { getPortStyle } from '@/utils/portPosition';
+import { machinePositionStyle } from '@/styles/cssCustomProps';
 
 interface MachineProps {
     data: PlacedMachine;

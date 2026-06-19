@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useSettingsStore } from '../store/settingsStore';
+import { useSettingsStore } from '@/store/settingsStore';
 
 export const useChineseConverter = () => {
     const { language } = useSettingsStore();

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useGameStore } from '../store/gameStore';
-import { MACHINES } from '../config/machines';
-import { GameMode } from '../types';
+import { useGameStore } from '@/store/gameStore';
+import { MACHINES } from '@/config/machines';
+import { GameMode } from '@/types';
 import classNames from 'classnames';
 import { MousePointer2, ArrowRight, Waves, BoxSelect } from 'lucide-react';
 import { Tabs } from '@chakra-ui/react';

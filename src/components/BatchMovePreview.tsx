@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore } from '@/store/gameStore';
 import { Machine } from './Machine';
-import { GameMode, portTypeToMask } from '../types';
-import type { Point, Connection, PortType } from '../types';
-import { pathToPoints } from '../utils/portPosition';
-import { Z_INDEX, connZ } from '../config/zIndex';
+import { GameMode, portTypeToMask } from '@/types';
+import type { Point, Connection, PortType } from '@/types';
+import { pathToPoints } from '@/utils/portPosition';
+import { Z_INDEX, connZ } from '@/config/zIndex';
 
 interface BatchMovePreviewProps {
   hoverPos: Point | null;

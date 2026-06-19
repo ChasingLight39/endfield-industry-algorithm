@@ -7,12 +7,7 @@
     width: calc(var(--w) * var(--grid-size));
     height: calc(var(--h) * var(--grid-size));
     padding: 3px;
-    /* Shrink body relative to grid cell */
-    z-index: var(--z-machine-container);
 
-    &:hover {
-        z-index: var(--z-machine-hover);
-    }
 }
 
 .machine-body {

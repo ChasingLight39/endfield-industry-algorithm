@@ -1,4 +1,4 @@
-import type { Material } from '../types';
+import type { Material } from '@/types';
 
 export const MATERIALS: Record<string, Material> = {
     BLUE_IRON_ORE: {

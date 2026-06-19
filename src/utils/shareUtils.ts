@@ -1,6 +1,6 @@
 import html2canvas from 'html2canvas';
-import type { Point, PlacedMachine, Connection, Direction } from '../types';
-import { MACHINES } from '../config/machines';
+import type { Point, PlacedMachine, Connection, Direction } from '@/types';
+import { MACHINES } from '@/config/machines';
 import { getRotatedDimensions } from './machineUtils';
 import { getBoundingBox } from './grid';
 

@@ -3,7 +3,6 @@
 .machine-ghost {
     position: absolute;
     pointer-events: none;
-    z-index: var(--z-ghost);
     background: repeating-linear-gradient(-45deg,
             #c4c1c1,
             #c4c1c1 5px,
@@ -30,7 +29,6 @@
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    z-index: var(--z-ghost-arrow); // Above ghost (20)
 
     &.input-arrow {
         color: var(--gray);

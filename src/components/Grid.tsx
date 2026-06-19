@@ -1,17 +1,17 @@
 import { useMemo } from 'react';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore } from '@/store/gameStore';
 import { Machine } from './Machine';
 import { ConnectionSVGLayer } from './ConnectionSVGLayer';
 import { GhostPreview } from './GhostPreview';
 import { SelectionBox } from './SelectionBox';
 import { BatchMovePreview } from './BatchMovePreview';
-import { useGridEvents } from '../hooks/useGridEvents';
-import { GameMode } from '../types';
-import { getMachineConfig } from '../config/machines';
+import { useGridEvents } from '@/hooks/useGridEvents';
+import { GameMode } from '@/types';
+import { getMachineConfig } from '@/config/machines';
 import classNames from 'classnames';
 import './Grid.scss';
-import { getRotatedDimensions, buildPowerGrid } from '../utils/machineUtils';
-import { GRID_SIZE } from '../config/constants';
+import { getRotatedDimensions, buildPowerGrid } from '@/utils/machineUtils';
+import { GRID_SIZE } from '@/config/constants';
 
 export const Grid = () => {
   // ── 细粒度 store selector ──

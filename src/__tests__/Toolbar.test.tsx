@@ -1,9 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Toolbar } from '../components/Toolbar';
+import { Toolbar } from '@/components/Toolbar';
 import { TestWrapper } from './testWrapper';
-import { GameMode } from '../types';
-import { useGameStore } from '../store/gameStore';
+import { GameMode } from '@/types';
+import { useGameStore } from '@/store/gameStore';
 
 const resetStore = () => {
   useGameStore.setState({

@@ -1,9 +1,9 @@
 import type { StateCreator } from 'zustand';
 import type { ConnectionSlice, GameState } from './types';
-import type { Connection, Point, Direction, PlacedMachine, PortType } from '../../types';
-import { GameMode, portTypeToMask, MASK_SOLID_LOGISTICS, MASK_LIQUID_LOGISTICS } from '../../types';
-import { getMachineMask, getMachineCellMask } from '../../utils/machineUtils';
-import { MACHINES } from '../../config/machines';
+import type { Connection, Point, Direction, PlacedMachine, PortType } from '@/types';
+import { GameMode, portTypeToMask, MASK_SOLID_LOGISTICS, MASK_LIQUID_LOGISTICS } from '@/types';
+import { getMachineMask, getMachineCellMask } from '@/utils/machineUtils';
+import { MACHINES } from '@/config/machines';
 import {
     findMachineAt,
     splitConnectionAt,
@@ -14,8 +14,8 @@ import {
     findRouteForMachine,
     findRouteToGround,
     getCornerPoints,
-} from '../../utils/grid';
-import { getRotatedDimensions } from '../../utils/machineUtils';
+} from '@/utils/grid';
+import { getRotatedDimensions } from '@/utils/machineUtils';
 
 // ── 占用网格缓存 ──
 // 连线模式下每帧 updatePreview 重建三个网格，但 machines/connections 在帧之间不变。

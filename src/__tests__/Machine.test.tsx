@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Machine } from '../components/Machine';
+import { Machine } from '@/components/Machine';
 import { TestWrapper } from './testWrapper';
-import { useGameStore } from '../store/gameStore';
-import { GameMode } from '../types';
-import type { PlacedMachine } from '../types';
+import { useGameStore } from '@/store/gameStore';
+import { GameMode } from '@/types';
+import type { PlacedMachine } from '@/types';
 
 /** 一个真实存在的机器配置（精炼炉） */
 const makeMachine = (overrides: Partial<PlacedMachine> = {}): PlacedMachine => ({
