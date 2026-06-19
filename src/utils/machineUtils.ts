@@ -96,39 +96,3 @@ export const buildPowerGrid = (
     return grid;
 };
 
-/** 檢查目標機器是否在供電範圍內 */
-export const isMachinePowered = (
-    target: PlacedMachine,
-    allMachines: PlacedMachine[],
-    getConfig: (id: string) => MachineConfig | undefined
-): boolean => {
-    const targetConfig = getConfig(target.machineId);
-    if (!targetConfig || !targetConfig.power || targetConfig.power <= 0) {
-        // 不需要電力
-        return true;
-    }
-
-    // 找最大範圍以決定網格尺寸
-    let maxX = target.x + targetConfig.width;
-    let maxY = target.y + targetConfig.height;
-    for (const m of allMachines) {
-        const cfg = getConfig(m.machineId);
-        if (!cfg) continue;
-        const { width, height } = getRotatedDimensions(cfg.width, cfg.height, m.rotation);
-        maxX = Math.max(maxX, m.x + width + cfg.supplyDistance);
-        maxY = Math.max(maxY, m.y + height + cfg.supplyDistance);
-    }
-    const gw = maxX + 10;
-    const gh = maxY + 10;
-
-    const powerGrid = buildPowerGrid(allMachines, gw, gh, getConfig);
-    const { width, height } = getRotatedDimensions(targetConfig.width, targetConfig.height, target.rotation);
-
-    for (let y = target.y; y < target.y + height; y++) {
-        for (let x = target.x; x < target.x + width; x++) {
-            if (powerGrid[y * gw + x]) return true;
-        }
-    }
-
-    return false;
-};

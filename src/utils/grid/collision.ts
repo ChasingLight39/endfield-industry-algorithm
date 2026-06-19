@@ -4,7 +4,7 @@ import { MACHINES } from '@/config/machines';
 import { getRotatedDimensions, getMachineCellMask } from '@/utils/machineUtils';
 
 /** 获取机器旋转后的矩形 */
-export const getMachineRect = (machine: PlacedMachine) => {
+const getMachineRect = (machine: PlacedMachine) => {
   const config = MACHINES.find(m => m.id === machine.machineId);
   if (!config) return null;
   const { width, height } = getRotatedDimensions(config.width, config.height, machine.rotation);

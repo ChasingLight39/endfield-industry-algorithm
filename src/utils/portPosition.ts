@@ -3,14 +3,14 @@ import { GRID_SIZE, PORT_ARROW_ROTATION } from '@/config/constants';
 
 /** 端口中心在格子内的像素偏移量
  *  推导: 20(GRID_SIZE/2) - 3(容器padding) - 2(容器border) - 3(机身border) = 12 */
-export const CELL_CENTER = (GRID_SIZE / 2) - 3 - 2 - 3; // = 12
+const CELL_CENTER = (GRID_SIZE / 2) - 3 - 2 - 3; // = 12
 
 // ── SVG 路径工具（被 ConnectionSVGLayer 和 BatchMovePreview 共用） ──
 
-export const EXTEND = 0.45;
+const EXTEND = 0.45;
 
 /** 将路径端点沿方向延伸，使连线视觉上深入机器内部 */
-export const extendPoint = (p: Point, dir: number, amt: number): Point => {
+const extendPoint = (p: Point, dir: number, amt: number): Point => {
   switch (dir % 4) {
     case 0: return { x: p.x, y: p.y - amt };
     case 1: return { x: p.x + amt, y: p.y };

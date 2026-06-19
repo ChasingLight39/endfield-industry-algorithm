@@ -425,6 +425,5 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
             return;
         }
 
-        if (collision) return;
     },
 });

@@ -1,5 +1,5 @@
 // ── 碰撞检测 / 包围盒 ──
-export { getBoundingBox, getMachineRect, checkPlacementCollision, calculateContentDimensions } from './collision';
+export { getBoundingBox, checkPlacementCollision, calculateContentDimensions } from './collision';
 export type { BoundingBox } from './collision';
 
 // ── 占用网格 ──
