@@ -11,7 +11,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
     persist(
         (set) => ({
-            language: 'zh-TW',
+            language: 'zh-CN',
             setLanguage: (lang) => set({ language: lang }),
         }),
         {
