@@ -1,7 +1,7 @@
 import { createListCollection, Select } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
 import './Header.scss';
-import logoIcon from '../assets/logo.png';
+import logoIcon from '../assets/logo-header.png';
 
 import { IconButton } from './IconButton';
 

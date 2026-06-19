@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './LoadingScreen.scss';
-import loadingImg from '../assets/loading.png';
+// 使用 SVG logo 替代原 360KB 的 loading.png
 
 interface LoadingScreenProps {
     onComplete: () => void;
@@ -93,7 +93,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                 </div>
 
                 <div className="right-section">
-                    <img src={loadingImg} alt="Loading..." className="loading-img" />
+                    <img src="/logo.svg" alt="Loading..." className="loading-img" />
                     <div className="sub-text">终末地牛逼</div>
                 </div>
             </div>
