@@ -10,8 +10,9 @@
  */
 export const Z_INDEX = {
   // —— 机器附属 ——
-  POWER_ALERT_ICON: 1,
-  MACHINE_LABEL: 2,
+  MACHINE_ICON: 1,
+  POWER_ALERT_ICON: 2,
+  MACHINE_LABEL: 3,
 
   // ── 0-99: 基础层 ──
   SUPPLY_RANGE: 5,

@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo, memo } from 'react';
+import React, { useRef, useCallback, useMemo, memo, useState } from 'react';
 import { Icon } from '@iconify/react';
 import classNames from 'classnames';
 import { GameMode } from '@/types';
@@ -8,6 +8,7 @@ import { useGameStore } from '@/store/gameStore';
 import './Machine.scss';
 import { getRotatedDimensions, getRotatedPorts, getMachineMask } from '@/utils/machineUtils';
 import { Z_INDEX, machineZ } from '@/config/zIndex';
+import { GRID_SIZE } from '@/config/constants';
 import { getPortStyle } from '@/utils/portPosition';
 import { machinePositionStyle } from '@/styles/cssCustomProps';
 
@@ -81,6 +82,9 @@ export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPower
         }
     }, []);
 
+    // 图标加载失败时切为文字后备
+    const [imgError, setImgError] = useState(false);
+
     const getPortClasses = useCallback((currentPort: { x: number, y: number, side: string }) => {
         const classes: string[] = ['port', currentPort.side];
 
@@ -113,6 +117,10 @@ export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPower
     // ── 早期返回（在所有 hooks 之后） ──
     if (!config) return null;
 
+    // ── 机器图标（≥2×2 的机器显示） ──
+    const showIcon = config.width >= 2 && config.height >= 2;
+    const iconSize = Math.min(width, height) * GRID_SIZE / 2;
+
     const style = {
         ...machinePositionStyle(data.x, data.y, width, height),
         zIndex: machineZ(zBase, getMachineMask(data.machineId)),
@@ -141,6 +149,43 @@ export const Machine: React.FC<MachineProps> = memo(({ data, isSelected, isPower
                     <div>[点击] 查看详情/选择物品</div>
                     <div>[长按] 移动</div>
                 </div>
+
+                {showIcon && (
+                    <div
+                        className="machine-icon"
+                        style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            zIndex: Z_INDEX.MACHINE_ICON,
+                            width: iconSize,
+                            height: iconSize,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            pointerEvents: 'none',
+                        }}
+                    >
+                        {!imgError ? (
+                            <img
+                                src={new URL(`../assets/machines/${config.id}.webp`, import.meta.url).href}
+                                alt={config.name}
+                                onError={() => setImgError(true)}
+                                style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '100%',
+                                    objectFit: 'contain',
+                                }}
+                            />
+                        ) : (
+                            <span
+                                className="machine-icon-text"
+                                style={{ fontSize: Math.max(10, iconSize * 0.25) }}
+                            >{config.name}</span>
+                        )}
+                    </div>
+                )}
 
                 {!isPowered && (
                     <div

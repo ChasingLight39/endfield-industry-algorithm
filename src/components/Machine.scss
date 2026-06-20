@@ -52,6 +52,22 @@
     &:hover .machine-label {
         opacity: 1;
     }
+
+    .machine-icon {
+        opacity: 0.7;
+        filter: grayscale(0.15);
+    }
+
+    .machine-icon-text {
+        color: rgba(0, 0, 0, 0.75);
+        text-align: center;
+        line-height: 1.2;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        word-break: break-all;
+    }
 }
 
 .machine-container {
