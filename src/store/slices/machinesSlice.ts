@@ -13,7 +13,15 @@ export const createMachinesSlice: StateCreator<GameState, [], [], MachinesSlice>
     previewRotation: 0,
     movingMachineBackup: null,
 
-    setMode: (mode) => set({ mode }),
+    setMode: (mode) => {
+        const current = get().mode;
+        // 离开 DEVICE_SELECT 模式时清除框选状态
+        if (current === GameMode.DEVICE_SELECT && mode !== GameMode.DEVICE_SELECT) {
+            set({ mode, selectionStart: null, selectionEnd: null, selectedMachineIds: [], selectedConnectionIds: [] });
+        } else {
+            set({ mode });
+        }
+    },
 
     selectMachine: (machineId) => {
         const { movingMachineBackup } = get();

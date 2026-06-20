@@ -15,5 +15,5 @@ export { routeManhattan, trySingleLRoute } from './pathfinding';
 export { getCornerPoints, getMachinePortCheckPositions, splitConnectionAt, getPortOuterCells, getInputPortOuterCells, findPortOuterCellAt, findMachineAt, pickClosestPort } from './port';
 
 // ── 路由校验 ──
-export { validateRouteConflicts, findRouteForMachine, findRouteToGround } from './routeValidation';
+export { validateRouteConflicts, findRouteForMachine, findRouteToGround, checkStartOverlap } from './routeValidation';
 export type { RouteToMachineResult, RouteToGroundResult } from './routeValidation';

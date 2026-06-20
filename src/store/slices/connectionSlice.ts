@@ -14,6 +14,7 @@ import {
     findRouteForMachine,
     findRouteToGround,
     getCornerPoints,
+    checkStartOverlap,
 } from '@/utils/grid';
 import { getRotatedDimensions } from '@/utils/machineUtils';
 
@@ -110,6 +111,16 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
             return;
         }
 
+        // ── 起点重叠检查：新路径开头不能落在已有同类型同向连线上（续接豁免）──
+        if (!checkStartOverlap(startPos, tailFacing, connections, portType, isContinuing)) {
+            set({
+                activeStartPos: startPos, activeTailFacing: tailFacing,
+                previewPath: [startPos, mouseGridPos], previewHeadFacing: tailFacing,
+                isValidPath: false, previewTargetIsMachine: false,
+            });
+            return;
+        }
+
         // ── 查找目标机器 → 委托纯函数计算路径 ──
         const targetMachine = findMachineAt(mouseGridPos, machines);
 
@@ -153,6 +164,12 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
         const { activeTailFacing, previewPath, previewHeadFacing, isValidPath, portType, connections, machines,
             isContinuing, previewTargetIsMachine } = get();
         if (!isValidPath || previewPath.length === 0) {
+            get().cancelConnection();
+            return;
+        }
+
+        // ── 起点重叠检查（续接豁免，作为防御性二次校验）──
+        if (!checkStartOverlap(previewPath[0], activeTailFacing, connections, portType, isContinuing)) {
             get().cancelConnection();
             return;
         }

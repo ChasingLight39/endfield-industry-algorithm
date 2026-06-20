@@ -1,7 +1,7 @@
-import type { Point, Direction, PortType, PlacedMachine } from '@/types';
+import type { Point, Direction, PortType, PlacedMachine, Connection } from '@/types';
 import { sideToDir } from '@/types';
 import { trySingleLRoute } from './pathfinding';
-import { computeHeadFacing } from './direction';
+import { computeHeadFacing, dirFromPoints } from './direction';
 import { getInputPortOuterCells } from './port';
 import { getCornerPoints } from './port';
 
@@ -59,6 +59,41 @@ export const validateRouteConflicts = (
     if (existingCornerGrid[idx]) return false;
   }
 
+  return true;
+};
+
+/**
+ * 检查新连线起点是否与已有同类型连线同向/反向重叠
+ * 续接模式豁免（起点有意与上一段重合）
+ * @returns true = 无重叠，可以继续；false = 重叠，路径非法
+ */
+export const checkStartOverlap = (
+  startPos: Point,
+  tailFacing: Direction,
+  connections: Connection[],
+  portType: PortType,
+  isContinuing: boolean,
+): boolean => {
+  if (isContinuing) return true;
+
+  const oppositeFacing = ((tailFacing + 2) % 4) as Direction;
+  for (const c of connections) {
+    if (c.portType !== portType) continue;
+    for (let i = 0; i < c.path.length; i++) {
+      if (c.path[i].x !== startPos.x || c.path[i].y !== startPos.y) continue;
+      // 出方向
+      if (i < c.path.length - 1) {
+        const outDir = dirFromPoints(c.path[i], c.path[i + 1]);
+        if (outDir === tailFacing || outDir === oppositeFacing) return false;
+      }
+      // 入方向
+      if (i > 0) {
+        const inDir = dirFromPoints(c.path[i - 1], c.path[i]);
+        if (inDir === tailFacing || inDir === oppositeFacing) return false;
+      }
+      break;
+    }
+  }
   return true;
 };
 

@@ -93,7 +93,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                 </div>
 
                 <div className="right-section">
-                    <img src="/logo.svg" alt="Loading..." className="loading-img" />
+                    <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="菲比拉基建" className="loading-img" />
                     <div className="sub-text">终末地牛逼</div>
                 </div>
             </div>
