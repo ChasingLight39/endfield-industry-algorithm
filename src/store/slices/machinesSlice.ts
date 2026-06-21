@@ -52,7 +52,7 @@ export const createMachinesSlice: StateCreator<GameState, [], [], MachinesSlice>
         const newRotation = (ms.placing.previewRotation + 1) % 4 as Direction;
         // 旋转后重新计算中心偏移
         let buildOffset: Point;
-        const config = MACHINES.find(c => c.id === ms.placing.selectedMachineId);
+        const config = MACHINES.find(c => c.id === ms.placing!.selectedMachineId);
         if (config) {
             const { width, height } = getRotatedDimensions(config.width, config.height, newRotation);
             buildOffset = { x: width / 2, y: height / 2 };

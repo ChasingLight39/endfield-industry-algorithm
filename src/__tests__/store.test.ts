@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useGameStore } from '@/store/gameStore';
-import type { PlacedMachine, Connection } from '@/types';
+import type { PlacedMachine, Connection, ModeState } from '@/types';
 
 /** 创建一台测试用的 1x1 机器（物流桥，不占大空间） */
 const makeLBR = (overrides: Partial<PlacedMachine> = {}): PlacedMachine => ({
@@ -122,16 +122,17 @@ describe('machinesSlice', () => {
       const s = useGameStore.getState();
       expect(s.machines).toHaveLength(0);
       expect(s.modeState.kind).toBe('BUILD');
-      expect(s.modeState.placing).toBeDefined();
-      expect(s.modeState.placing!.movingMachineBackup).toBeDefined();
-      expect(s.modeState.placing!.movingMachineBackup!.id).toBe('lbr-1');
+      const ms = s.modeState as Extract<ModeState, { kind: 'BUILD' }>;
+      expect(ms.placing).toBeDefined();
+      expect(ms.placing!.movingMachineBackup).toBeDefined();
+      expect(ms.placing!.movingMachineBackup!.id).toBe('lbr-1');
     });
 
     it('拾取不存在的机器不改变状态', () => {
       useGameStore.setState({ machines: [makeLBR()] });
       useGameStore.getState().pickupMachine('nonexistent');
       expect(useGameStore.getState().machines).toHaveLength(1);
-      expect(useGameStore.getState().modeState.placing).toBeNull();
+      expect((useGameStore.getState().modeState as Extract<ModeState, { kind: 'BUILD' }>).placing).toBeNull();
     });
   });
 
@@ -143,7 +144,7 @@ describe('machinesSlice', () => {
       const s = useGameStore.getState();
       expect(s.machines).toHaveLength(1);
       expect(s.modeState.kind).toBe('BUILD');
-      expect(s.modeState.placing).toBeNull();
+      expect((s.modeState as Extract<ModeState, { kind: 'BUILD' }>).placing).toBeNull();
     });
   });
 });

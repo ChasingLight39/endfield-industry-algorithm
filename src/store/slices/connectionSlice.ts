@@ -40,7 +40,7 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
         set({
             modeState: {
                 kind: 'WIRE',
-                portType: portType,
+                portType: portType as 'Solid' | 'Liquid',
                 connecting: {
                     availablePorts: ports,
                     activeStartPos: first.pos,

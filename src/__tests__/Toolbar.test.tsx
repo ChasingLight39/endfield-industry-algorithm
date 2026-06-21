@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Toolbar } from '@/components/Toolbar';
 import { TestWrapper } from './testWrapper';
 import { useGameStore } from '@/store/gameStore';
+import type { ModeState } from '@/types';
 
 const resetStore = () => {
   useGameStore.setState({
@@ -103,7 +104,8 @@ describe('Toolbar 组件', () => {
       });
       render(<TestWrapper><Toolbar /></TestWrapper>);
       fireEvent.click(screen.getByTitle('Select / Move'));
-      expect(useGameStore.getState().modeState.placing).toBeNull();
+      const ms = useGameStore.getState().modeState as Extract<ModeState, { kind: 'BUILD' }>;
+      expect(ms.placing).toBeNull();
     });
   });
 
