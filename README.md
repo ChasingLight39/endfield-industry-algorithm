@@ -11,7 +11,7 @@
 - **可视化编辑器**：基于 DOM 的网格画布，支持缩放/平移，机器放置、旋转、传送带与管道连接
 - **43 台机器**：涵盖核心、物流、仓储存取、基础生产、合成制造、电力六大分类
 - **智能连线**：L 形曼哈顿路由自动寻路，点击端口自动吸附，自动放置物流桥/管道桥，支持续接
-- **蓝图系统**：保存/加载蓝图到本地，支持框选+批量移动/复制/删除，V3 紧凑二进制分享链接
+- **蓝图系统**：保存/加载蓝图到本地，支持框选+批量移动/复制/删除，紧凑二进制分享链接
 - **撤销/重做**：50 步历史记录，Ctrl+Z/Y
 - **繁简切换**：opencc-js 实时繁简中文转换，MutationObserver 监听增量 DOM
 
@@ -97,16 +97,18 @@ src/
 ├── App.tsx                          # 根组件：uiView 条件路由 + 全局 Ctrl+Z/Y/S 快捷键
 ├── App.css                          # #root flex column 布局
 ├── index.css                        # CSS 变量 + 简中系统字体栈
-├── types.ts                         # 共享类型 + 掩码常量 + GameMode
+├── types.ts                         # 共享类型 + ModeState 判别联合 + 掩码常量
 ├── types/
 │   └── opencc-js.d.ts               # opencc-js 类型声明
 ├── store/
-│   ├── gameStore.ts                 # Zustand thin wrapper（组合 6 个切片 + devtools）
+│   ├── gameStore.ts                 # Zustand thin wrapper（组合 7 个切片 + devtools）
 │   ├── settingsStore.ts             # 独立 persist store（语言设置）
+│   ├── selectors.ts                 # 类型窄化 selector（25+ 个，从 modeState 提取子状态）
 │   └── slices/
-│       ├── types.ts                 # 6 个切片接口 + HistorySnapshot
-│       ├── canvasSlice.ts           # zoom / pan / gridWidth / gridHeight
-│       ├── machinesSlice.ts         # machines[] / mode / addMachine / removeMachine
+│       ├── types.ts                 # 7 个切片接口 + HistorySnapshot
+│       ├── canvasSlice.ts           # zoom / pan / gridWidth / gridHeight / hoverPosFrac
+│       ├── modeSlice.ts             # modeState(ModeState 判别联合) / setMode / cancelOperation
+│       ├── machinesSlice.ts         # machines[] / selectMachine / addMachine / removeMachine / pickupMachine
 │       ├── connectionSlice.ts       # connections[] / 连线流程 / 预览 / 提交
 │       ├── selectionSlice.ts        # 框选 / 批量移动 / 复制 / 删除
 │       ├── historySlice.ts          # 撤销/重做（50 步上限）
@@ -128,7 +130,7 @@ src/
 │   │   └── routeValidation.ts       # 路径冲突验证
 │   ├── machineUtils.ts              # 旋转尺寸/端口 + 供电网格 + 机器掩码
 │   ├── portPosition.ts              # 端口定位样式 + SVG 路径渲染
-│   ├── shareUtils.ts                # V3 二进制分享编码/解码 + 截图
+│   ├── shareUtils.ts                # 紧凑二进制分享编码/解码 + 截图
 │   ├── storage.ts                   # localStorage 蓝图 CRUD
 │   └── toaster.ts                   # Toast 单例
 ├── hooks/
@@ -136,7 +138,7 @@ src/
 │   ├── useChineseConverter.ts       # 繁简实时转换
 │   └── grid/
 │       ├── usePanZoom.ts            # 平移/缩放/坐标转换
-│       ├── useWireMode.ts           # CONVEYOR/PIPE 连线模式
+│       ├── useWireMode.ts           # WIRE 模式连线（Solid 传送带 / Liquid 管道）
 │       ├── useSelectionMode.ts      # 框选 + 批量移动
 │       └── useKeyboardShortcuts.ts  # 全局快捷键
 ├── styles/
@@ -180,10 +182,14 @@ src/
 │   └── useChineseConverter.test.tsx # 繁简转换测试
 └── assets/
     ├── logo-header.png              # Header 用 logo（96px 高，2x retina）
-    ├── loading.png                  # 加载画面插图
+    ├── loading.png                  # 368KB（未使用，待清理）
     ├── members/                     # 团队成员头像
-    ├── machines/                    # 机器图标 .webp
-    └── items/                       # 材料图标
+    └── machines/                    # 机器图标 .webp（24 台）
+
+_archive/                           # 已移除的旧资产
+├── fonts/                          # NaikaiFont-Bold.woff2 (17MB)
+├── items/                          # 132 张材料图标 .webp
+└── logo.png                        # 旧 logo (1.5MB)
 ```
 
 ## 许可证
