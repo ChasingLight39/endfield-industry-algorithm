@@ -2,8 +2,6 @@ import { useRef, useState, useCallback } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { GameMode } from '@/types';
 import type { Point } from '@/types';
-import { MACHINES } from '@/config/machines';
-import { getRotatedDimensions } from '@/utils/machineUtils';
 import { usePanZoom } from './grid/usePanZoom';
 import { useWireMode } from './grid/useWireMode';
 import { useSelectionMode } from './grid/useSelectionMode';
@@ -94,21 +92,10 @@ export const useGridEvents = (): UseGridEventsReturn => {
     }
 
     // ── 建造模式 ──
-    if (s.mode === GameMode.BUILD && s.selectedMachineId) {
-      const { pickupOffset, hoverPosFrac } = s;
-      let pos: Point;
-      if (pickupOffset && hoverPosFrac) {
-        // 拾取放置：用记录的偏移精确定位
-        pos = { x: Math.round(hoverPosFrac.x - pickupOffset.x), y: Math.round(hoverPosFrac.y - pickupOffset.y) };
-      } else {
-        // 直接放置：居中对齐
-        const rawPos = getGridPos(e);
-        const config = MACHINES.find(c => c.id === s.selectedMachineId);
-        const { width, height } = config
-          ? getRotatedDimensions(config.width, config.height, s.previewRotation)
-          : { width: 0, height: 0 };
-        pos = { x: rawPos.x - Math.floor(width / 2), y: rawPos.y - Math.floor(height / 2) };
-      }
+    if (s.mode === GameMode.BUILD && s.selectedMachineId && s.buildOffset) {
+      const pos = s.hoverPosFrac
+        ? { x: Math.round(s.hoverPosFrac.x - s.buildOffset.x), y: Math.round(s.hoverPosFrac.y - s.buildOffset.y) }
+        : getGridPos(e);
       s.takeSnapshot();
       s.addMachine(s.selectedMachineId, pos.x, pos.y, s.previewRotation);
       if (!e.ctrlKey) {

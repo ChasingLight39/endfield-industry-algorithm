@@ -25,7 +25,7 @@ export const GhostPreview: React.FC<GhostPreviewProps> = memo(({ hoverPos }) => 
   const connections = useGameStore(s => s.connections);
   const gridWidth = useGameStore(s => s.gridWidth);
   const gridHeight = useGameStore(s => s.gridHeight);
-  const pickupOffset = useGameStore(s => s.pickupOffset);
+  const buildOffset = useGameStore(s => s.buildOffset);
   const hoverPosFrac = useGameStore(s => s.hoverPosFrac);
 
   const ghostConfig = useMemo(
@@ -33,14 +33,14 @@ export const GhostPreview: React.FC<GhostPreviewProps> = memo(({ hoverPos }) => 
     [mode, selectedMachineId],
   );
 
-  // 拾取偏移后的实际 ghost 整格位置：round(鼠标小数位置 − 拾取偏移)
+  // 用 buildOffset 计算实际 ghost 整格位置：round(鼠标小数位置 − 偏移)
   const ghostPos = useMemo(() => {
-    if (!pickupOffset || !hoverPosFrac) return hoverPos;
+    if (!buildOffset || !hoverPosFrac) return hoverPos;
     return {
-      x: Math.round(hoverPosFrac.x - pickupOffset.x),
-      y: Math.round(hoverPosFrac.y - pickupOffset.y),
+      x: Math.round(hoverPosFrac.x - buildOffset.x),
+      y: Math.round(hoverPosFrac.y - buildOffset.y),
     };
-  }, [hoverPosFrac, pickupOffset, hoverPos]);
+  }, [hoverPosFrac, buildOffset, hoverPos]);
 
   const ghostData = useMemo(() => {
     if (!ghostConfig || !ghostPos) return null;

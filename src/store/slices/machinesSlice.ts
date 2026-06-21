@@ -12,7 +12,7 @@ export const createMachinesSlice: StateCreator<GameState, [], [], MachinesSlice>
     selectedMachineId: null,
     previewRotation: 0,
     movingMachineBackup: null,
-    pickupOffset: null,
+    buildOffset: null,
     hoverPosFrac: null,
 
     setHoverPosFrac: (pos) => set({ hoverPosFrac: pos }),
@@ -35,10 +35,31 @@ export const createMachinesSlice: StateCreator<GameState, [], [], MachinesSlice>
                 movingMachineBackup: null
             }));
         }
-        set({ selectedMachineId: machineId, mode: GameMode.BUILD, previewRotation: 0 });
+        // 计算放置偏移：默认取机器中心
+        let buildOffset: Point | null = null;
+        if (machineId) {
+            const config = MACHINES.find(c => c.id === machineId);
+            if (config) {
+                const { width, height } = getRotatedDimensions(config.width, config.height, 0);
+                buildOffset = { x: width / 2, y: height / 2 };
+            }
+        }
+        set({ selectedMachineId: machineId, mode: GameMode.BUILD, previewRotation: 0, buildOffset });
     },
 
-    rotatePreview: () => set(state => ({ previewRotation: (state.previewRotation + 1) % 4 as Direction })),
+    rotatePreview: () => set(state => {
+        const newRotation = (state.previewRotation + 1) % 4 as Direction;
+        // 旋转后重新计算中心偏移
+        let buildOffset: Point | null = null;
+        if (state.selectedMachineId) {
+            const config = MACHINES.find(c => c.id === state.selectedMachineId);
+            if (config) {
+                const { width, height } = getRotatedDimensions(config.width, config.height, newRotation);
+                buildOffset = { x: width / 2, y: height / 2 };
+            }
+        }
+        return { previewRotation: newRotation, buildOffset };
+    }),
 
     addMachine: (machineId, x, y, rotation) => {
         const config = MACHINES.find(m => m.id === machineId);
@@ -107,7 +128,7 @@ export const createMachinesSlice: StateCreator<GameState, [], [], MachinesSlice>
             movingMachineBackup: machine,
             selectedMachineId: machine.machineId,
             previewRotation: machine.rotation,
-            pickupOffset: offset,
+            buildOffset: offset,
             mode: GameMode.BUILD,
             machines: machines.filter(m => m.id !== instanceId),
         }));
@@ -129,7 +150,7 @@ export const createMachinesSlice: StateCreator<GameState, [], [], MachinesSlice>
             set(state => ({
                 machines: [...state.machines, movingMachineBackup],
                 movingMachineBackup: null,
-                pickupOffset: null,
+                buildOffset: null,
                 selectedMachineId: null,
                 mode: GameMode.BUILD
             }));
