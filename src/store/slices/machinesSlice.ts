@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { MachinesSlice, GameState } from './types';
-import type { PlacedMachine, Direction } from '@/types';
+import type { PlacedMachine, Direction, Point } from '@/types';
 import { GameMode } from '@/types';
 import { MACHINES } from '@/config/machines';
 import { checkPlacementCollision, getMachinePortCheckPositions } from '@/utils/grid';
@@ -90,10 +90,18 @@ export const createMachinesSlice: StateCreator<GameState, [], [], MachinesSlice>
         const machine = machines.find(m => m.id === instanceId);
         if (!machine) return;
 
-        // 记录拾取时鼠标在机器内的相对位置（小数偏移）
-        const offset = hoverPosFrac
-            ? { x: hoverPosFrac.x - machine.x, y: hoverPosFrac.y - machine.y }
-            : { x: 0, y: 0 };
+        // 记录拾取时鼠标在机器内的相对位置
+        // 鼠标在机器内 → 精确记录偏移；否则默认取机器中心
+        let offset: Point;
+        if (hoverPosFrac) {
+            offset = { x: hoverPosFrac.x - machine.x, y: hoverPosFrac.y - machine.y };
+        } else {
+            const config = MACHINES.find(c => c.id === machine.machineId);
+            const { width, height } = config
+                ? getRotatedDimensions(config.width, config.height, machine.rotation)
+                : { width: 0, height: 0 };
+            offset = { x: width / 2, y: height / 2 };
+        }
 
         set(() => ({
             movingMachineBackup: machine,
