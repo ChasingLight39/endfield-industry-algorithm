@@ -1,3 +1,5 @@
+import type { Mask } from '@/utils/mask';
+
 export type MachineId = string;
 
 export interface Point {
@@ -22,7 +24,7 @@ export interface MachineConfig {
   outputs: PortConfig[];
   color: string;
   supplyDistance: number; // 从机器边缘向外延伸的格数 (0=不供电)
-  mask: MachineMask; // 每格掩码，全同模式用 number，差异模式用 number[][]
+  mask: Mask; // 每格碰撞掩码（通过 Mask.Uniform 初始化）
 }
 
 export type Side = 'top' | 'right' | 'bottom' | 'left';
@@ -36,8 +38,6 @@ export interface PortConfig {
   type: PortType;
   autoConnect: boolean; // 该端口是否自动贴附物流器
 }
-
-export type MachineMask = number | number[][] // number=全同模式, number[][]=差异模式(每格独立掩码)
 
 export type Direction = 0 | 1 | 2 | 3; // 0: Up, 1: Right, 2: Down, 3: Left (Clockwise)
 

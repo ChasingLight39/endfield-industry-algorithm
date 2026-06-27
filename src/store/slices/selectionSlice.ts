@@ -3,8 +3,9 @@ import type { SelectionSlice, GameState } from './types';
 import type { PlacedMachine, Connection, Point } from '@/types';
 import { portTypeToMask } from '@/types';
 import { MACHINES } from '@/config/machines';
+import { Mask } from '@/utils/mask';
 import { getMachinePortCheckPositions, getBoundingBox, getCornerPoints, splitConnectionAt } from '@/utils/grid';
-import { getRotatedDimensions, getMachineCellMask, getMachineMask } from '@/utils/machineUtils';
+import { getRotatedDimensions, getMachineConfigById } from '@/utils/machineUtils';
 
 export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlice> = (set, get) => ({
 
@@ -218,32 +219,25 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
         }));
 
         // ── 构建剩余实体的掩码网格 ──
-        const baseGrid = new Uint8Array(gridWidth * gridHeight);
+        let baseGrid = Mask.Uniform(gridWidth, gridHeight, 0);
 
         for (const m of machines) {
             const cfg = MACHINES.find(c => c.id === m.machineId);
             if (!cfg) continue;
             const { width: mw, height: mh } = getRotatedDimensions(cfg.width, cfg.height, m.rotation);
-            const mx2 = Math.min(m.x + mw, gridWidth);
-            const my2 = Math.min(m.y + mh, gridHeight);
-            for (let my = Math.max(m.y, 0); my < my2; my++) {
-                const row = my * gridWidth;
-                for (let mx = Math.max(m.x, 0); mx < mx2; mx++) {
-                    baseGrid[row + mx] |= getMachineCellMask(m.machineId, mx - m.x, my - m.y);
-                }
-            }
+            baseGrid.MergeInPlace(Mask.Uniform(mw, mh, cfg.mask.maxMask), m.x, m.y);
         }
 
         for (const c of connections) {
             const cm = portTypeToMask[c.portType];
             for (const p of c.path) {
                 if (p.x >= 0 && p.x < gridWidth && p.y >= 0 && p.y < gridHeight) {
-                    baseGrid[p.y * gridWidth + p.x] |= cm;
+                    baseGrid.data[p.y * gridWidth + p.x] |= cm;
                 }
             }
         }
 
-        // ── 逐机检测 + 累积掩码 ──
+        // ── 逐机检测 + 累积掩码（TryMerge = HasCollision + Merge）──
         for (const m of placedMachines) {
             const cfg = MACHINES.find(c => c.id === m.machineId);
             if (!cfg) continue;
@@ -254,23 +248,9 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
                 break;
             }
 
-            let maskHit = false;
-            for (let cy = m.y; cy < m.y + mh && !maskHit; cy++) {
-                const row = cy * gridWidth;
-                for (let cx = m.x; cx < m.x + mw && !maskHit; cx++) {
-                    if (getMachineCellMask(m.machineId, cx - m.x, cy - m.y) & baseGrid[row + cx]) {
-                        maskHit = true;
-                    }
-                }
-            }
-            if (maskHit) { collision = true; break; }
-
-            for (let cy = m.y; cy < m.y + mh; cy++) {
-                const row = cy * gridWidth;
-                for (let cx = m.x; cx < m.x + mw; cx++) {
-                    baseGrid[row + cx] |= getMachineCellMask(m.machineId, cx - m.x, cy - m.y);
-                }
-            }
+            const result = baseGrid.TryMerge(Mask.Uniform(mw, mh, cfg.mask.maxMask), m.x, m.y);
+            if (!result) { collision = true; break; }
+            baseGrid = result;
         }
 
         // ── 连线交叉检测 + 桥生成 ──
@@ -290,7 +270,7 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
 
             for (const pt of portTypes) {
                 const bridgeId = pt === 'Liquid' ? 'pbr' : 'lbr';
-                const bridgeMask = getMachineMask(bridgeId);
+                const bridgeMask = getMachineConfigById(bridgeId)!.mask.maxMask;
                 const connMask = portTypeToMask[pt];
 
                 const pointToConns = new Map<string, Connection[]>();
@@ -314,34 +294,28 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
                     }
                 }
 
-                const fullMaskGrid = new Uint8Array(gridWidth * gridHeight);
+                const fullMask = Mask.Uniform(gridWidth, gridHeight, 0);
                 for (const m of allMachines) {
                     const c2 = MACHINES.find(c => c.id === m.machineId);
                     if (!c2) continue;
                     const { width: mw, height: mh } = getRotatedDimensions(c2.width, c2.height, m.rotation);
-                    const mx2 = Math.min(m.x + mw, gridWidth);
-                    const my2 = Math.min(m.y + mh, gridHeight);
-                    for (let my = Math.max(m.y, 0); my < my2; my++) {
-                        const row = my * gridWidth;
-                        for (let mx = Math.max(m.x, 0); mx < mx2; mx++) {
-                            fullMaskGrid[row + mx] |= getMachineCellMask(m.machineId, mx - m.x, my - m.y);
-                        }
-                    }
+                    fullMask.MergeInPlace(Mask.Uniform(mw, mh, c2.mask.maxMask), m.x, m.y);
                 }
                 for (const c of connections) {
                     const cm = portTypeToMask[c.portType];
                     for (const p of c.path) {
                         if (p.x >= 0 && p.x < gridWidth && p.y >= 0 && p.y < gridHeight) {
-                            fullMaskGrid[p.y * gridWidth + p.x] |= cm;
+                            fullMask.data[p.y * gridWidth + p.x] |= cm;
                         }
                     }
                 }
                 for (const b of bridgesToCreate) {
-                    const bm = getMachineMask(b.machineId);
+                    const bm = getMachineConfigById(b.machineId)!.mask.maxMask;
                     if (b.x >= 0 && b.x < gridWidth && b.y >= 0 && b.y < gridHeight) {
-                        fullMaskGrid[b.y * gridWidth + b.x] |= bm;
+                        fullMask.data[b.y * gridWidth + b.x] |= bm;
                     }
                 }
+                const fullMaskGrid = fullMask.data;
 
                 for (const conn of placedConns) {
                     if (conn.portType !== pt) continue;

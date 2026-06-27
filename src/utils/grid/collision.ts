@@ -1,7 +1,8 @@
 import type { PlacedMachine, Point } from '@/types';
 import { portTypeToMask } from '@/types';
 import { MACHINES } from '@/config/machines';
-import { getRotatedDimensions, getMachineCellMask } from '@/utils/machineUtils';
+import { getRotatedDimensions } from '@/utils/machineUtils';
+import { Mask } from '@/utils/mask';
 
 /** 获取机器旋转后的矩形 */
 const getMachineRect = (machine: PlacedMachine) => {
@@ -50,7 +51,7 @@ export const getBoundingBox = (
   return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
 };
 
-/** 掩码级放置碰撞检测：逐格 AND 候选机器掩码与已有实体掩码，统一预检和放置逻辑 */
+/** 掩码级放置碰撞检测：用 Mask 对象统一构建占用网格并逐格 AND 候选掩码 */
 export const checkPlacementCollision = (
   machineId: string,
   x: number, y: number,
@@ -60,44 +61,32 @@ export const checkPlacementCollision = (
   gridW: number,
   gridH: number
 ): boolean => {
-  const grid = new Uint8Array(gridW * gridH);
+  // 构建已有实体占用网格
+  const grid = Mask.Uniform(gridW, gridH, 0);
 
   // 已有机器掩码
   for (const m of machines) {
     const cfg = MACHINES.find(c => c.id === m.machineId);
     if (!cfg) continue;
     const { width: mw, height: mh } = getRotatedDimensions(cfg.width, cfg.height, m.rotation);
-    const mx2 = Math.min(m.x + mw, gridW);
-    const my2 = Math.min(m.y + mh, gridH);
-    for (let my = Math.max(m.y, 0); my < my2; my++) {
-      const row = my * gridW;
-      for (let mx = Math.max(m.x, 0); mx < mx2; mx++) {
-        grid[row + mx] |= getMachineCellMask(m.machineId, mx - m.x, my - m.y);
-      }
-    }
+    grid.MergeInPlace(Mask.Uniform(mw, mh, cfg.mask.maxMask), m.x, m.y);
   }
 
   // 已有连线掩码 (所有类型)
   for (const c of connections) {
     const cm = portTypeToMask[c.portType as keyof typeof portTypeToMask] ?? 0;
+    if (cm === 0) continue;
     for (const p of c.path) {
       if (p.x >= 0 && p.x < gridW && p.y >= 0 && p.y < gridH) {
-        grid[p.y * gridW + p.x] |= cm;
+        grid.data[p.y * gridW + p.x] |= cm;
       }
     }
   }
 
   // 候选机器每格掩码 vs 已有掩码
-  for (let cy = y; cy < y + height; cy++) {
-    if (cy < 0 || cy >= gridH) continue;
-    const row = cy * gridW;
-    for (let cx = x; cx < x + width; cx++) {
-      if (cx < 0 || cx >= gridW) continue;
-      if (getMachineCellMask(machineId, cx - x, cy - y) & grid[row + cx]) return true;
-    }
-  }
-
-  return false;
+  const candidateCfg = MACHINES.find(c => c.id === machineId);
+  if (!candidateCfg) return false;
+  return grid.HasCollision(Mask.Uniform(width, height, candidateCfg.mask.maxMask), x, y);
 };
 
 /** 计算内容尺寸（用于蓝图等） */

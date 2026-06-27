@@ -1,7 +1,8 @@
 import type { PlacedMachine, Connection, PortType } from '@/types';
 import { portTypeToMask } from '@/types';
 import { MACHINES } from '@/config/machines';
-import { getRotatedDimensions, getMachineCellMask } from '@/utils/machineUtils';
+import { getRotatedDimensions } from '@/utils/machineUtils';
+import { Mask } from '@/utils/mask';
 import { getCornerPoints } from './port';
 
 /** 构建连线占用矩阵 (0=空, 1=被连线占用), 可选按 portType 过滤 */
@@ -35,21 +36,14 @@ export const buildMergedGrid = (
   gridH: number,
   portType: PortType
 ): Uint8Array => {
-  const grid = new Uint8Array(gridW * gridH);
+  const grid = Mask.Uniform(gridW, gridH, 0);
 
   // 机器占用
   for (const m of machines) {
     const config = MACHINES.find(c => c.id === m.machineId);
     if (!config) continue;
     const { width, height } = getRotatedDimensions(config.width, config.height, m.rotation);
-    const mx2 = Math.min(m.x + width, gridW);
-    const my2 = Math.min(m.y + height, gridH);
-    for (let y = Math.max(m.y, 0); y < my2; y++) {
-      const row = y * gridW;
-      for (let x = Math.max(m.x, 0); x < mx2; x++) {
-        grid[row + x] |= getMachineCellMask(m.machineId, x - m.x, y - m.y);
-      }
-    }
+    grid.MergeInPlace(Mask.Uniform(width, height, config.mask.maxMask), m.x, m.y);
   }
 
   // 异类型连线 (同类型跳过, 可通过放桥)
@@ -58,12 +52,12 @@ export const buildMergedGrid = (
     const otherMask = portTypeToMask[c.portType];
     for (const p of c.path) {
       if (p.x >= 0 && p.x < gridW && p.y >= 0 && p.y < gridH) {
-        grid[p.y * gridW + p.x] |= otherMask;
+        grid.data[p.y * gridW + p.x] |= otherMask;
       }
     }
   }
 
-  return grid;
+  return grid.data;
 };
 
 /**

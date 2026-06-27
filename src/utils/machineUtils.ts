@@ -1,32 +1,23 @@
 import type { Direction, PortConfig, PlacedMachine, MachineConfig } from '@/types';
-import { MASK_REGULAR_MACHINE } from '@/types';
 import { MACHINES } from '@/config/machines';
 
 /** 机器 ID → 配置的 O(1) 查找表 */
 const machineMap = new Map(MACHINES.map(m => [m.id, m]));
 
-/** 从配置读取机器渲染掩码（全同模式返回原值，差异模式返回 max） */
-export const getMachineMask = (machineId: string): number => {
-    const cfg = machineMap.get(machineId);
-    if (!cfg) return MASK_REGULAR_MACHINE;
-    const m = cfg.mask;
-    if (typeof m === 'number') return m;
-    let max = 0;
-    for (const row of m) for (const v of row) if (v > max) max = v;
-    return max;
-};
+// 启动时验证：硬编码引用的机器 ID 必须存在，否则立即炸，避免静默坏数据
+const REQUIRED_IDS = [
+  'lbr', 'pbr',  // 物流桥 / 管道桥 — connectionSlice + selectionSlice 桥生成
+  'pco',         // 协议核心 — 默认蓝图起点
+];
+for (const id of REQUIRED_IDS) {
+  if (!machineMap.has(id)) {
+    throw new Error(`[machineUtils] 缺失必要机器配置: "${id}"，请检查 MACHINES 数组`);
+  }
+}
 
-/** 从配置读取机器指定格的碰撞掩码 */
-export const getMachineCellMask = (machineId: string, relX: number, relY: number): number => {
-    const cfg = machineMap.get(machineId);
-    if (!cfg) return 0;
-    const m = cfg.mask;
-    if (typeof m === 'number') return m;
-    if (relY < 0 || relY >= m.length) return 0;
-    const row = m[relY];
-    if (relX < 0 || relX >= row.length) return 0;
-    return row[relX];
-};
+/** O(1) 查找机器配置 */
+export const getMachineConfigById = (id: string): MachineConfig | undefined =>
+    machineMap.get(id);
 
 export const getRotatedDimensions = (width: number, height: number, rotation: Direction) => {
     if (rotation % 2 === 1) { // 1 (90) or 3 (270)

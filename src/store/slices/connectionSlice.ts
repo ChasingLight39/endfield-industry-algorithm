@@ -2,7 +2,8 @@ import type { StateCreator } from 'zustand';
 import type { ConnectionSlice, GameState } from './types';
 import type { Connection, Point, Direction, PlacedMachine, PortType } from '@/types';
 import { portTypeToMask, MASK_SOLID_LOGISTICS, MASK_LIQUID_LOGISTICS } from '@/types';
-import { getMachineMask, getMachineCellMask } from '@/utils/machineUtils';
+import { Mask } from '@/utils/mask';
+import { getMachineConfigById, getRotatedDimensions } from '@/utils/machineUtils';
 import { MACHINES } from '@/config/machines';
 import {
     findMachineAt,
@@ -15,7 +16,6 @@ import {
     getCornerPoints,
     checkStartOverlap,
 } from '@/utils/grid';
-import { getRotatedDimensions } from '@/utils/machineUtils';
 
 // ── 占用网格缓存 ──
 // 连线模式下每帧 updatePreview 重建三个网格，但 machines/connections 在帧之间不变。
@@ -36,13 +36,22 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
     connections: [],
 
     startConnecting: (ports, portType) => {
-        const first = ports[0];
+        // 过滤越界端口（边缘机器朝外端口的外侧格可能在地图外）
+        const { gridWidth, gridHeight } = get();
+        const gw = gridWidth || 100;
+        const gh = gridHeight || 100;
+        const validPorts = ports.filter(p =>
+            p.pos.x >= 0 && p.pos.x < gw && p.pos.y >= 0 && p.pos.y < gh
+        );
+        if (validPorts.length === 0) return;
+
+        const first = validPorts[0];
         set({
             modeState: {
                 kind: 'WIRE',
                 portType: portType as 'Solid' | 'Liquid',
                 connecting: {
-                    availablePorts: ports,
+                    availablePorts: validPorts,
                     activeStartPos: first.pos,
                     activeTailFacing: first.facing,
                     previewPath: [first.pos],
@@ -181,6 +190,14 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
             return;
         }
 
+        // ── 防御性边界检查：路径点全部必须在网格内 ──
+        const { gridWidth: gwChk, gridHeight: ghChk } = get();
+        const wChk = gwChk || 100; const hChk = ghChk || 100;
+        if (previewPath.some(p => p.x < 0 || p.x >= wChk || p.y < 0 || p.y >= hChk)) {
+            set({ modeState: { kind: 'WIRE', portType: wiringPortType, connecting: null } });
+            return;
+        }
+
         // ── 起点重叠检查（续接豁免，作为防御性二次校验）──
         if (!checkStartOverlap(previewPath[0], activeTailFacing, connections, wiringPortType, isContinuing)) {
             set({ modeState: { kind: 'WIRE', portType: wiringPortType, connecting: null } });
@@ -230,31 +247,26 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
         }
 
         const bridgeId = wiringPortType === 'Liquid' ? 'pbr' : 'lbr';
-        const bridgeMask = getMachineMask(bridgeId);
+        const bridgeMask = getMachineConfigById(bridgeId)!.mask.maxMask;
         const connMask2 = portTypeToMask[wiringPortType];
 
         // 构建全量掩码网格 (机器 + 全部连线)
         const { gridWidth: gw3, gridHeight: gh3 } = get();
         const w3 = gw3 || 100; const h3 = gh3 || 100;
-        const fullMaskGrid = new Uint8Array(w3 * h3);
+        const fullMask = Mask.Uniform(w3, h3, 0);
         for (const m of machines) {
             const cfg = MACHINES.find(c => c.id === m.machineId);
             if (!cfg) continue;
             const { width, height } = getRotatedDimensions(cfg.width, cfg.height, m.rotation);
-            const mx2 = Math.min(m.x + width, w3); const my2 = Math.min(m.y + height, h3);
-            for (let y = Math.max(m.y, 0); y < my2; y++) {
-                const row = y * w3;
-                for (let x = Math.max(m.x, 0); x < mx2; x++) {
-                    fullMaskGrid[row + x] |= getMachineCellMask(m.machineId, x - m.x, y - m.y);
-                }
-            }
+            fullMask.MergeInPlace(Mask.Uniform(width, height, cfg.mask.maxMask), m.x, m.y);
         }
         for (const c of connections) {
             const cm = portTypeToMask[c.portType];
             for (const p of c.path) {
-                if (p.x >= 0 && p.x < w3 && p.y >= 0 && p.y < h3) { fullMaskGrid[p.y * w3 + p.x] |= cm; }
+                if (p.x >= 0 && p.x < w3 && p.y >= 0 && p.y < h3) { fullMask.data[p.y * w3 + p.x] |= cm; }
             }
         }
+        const fullMaskGrid = fullMask.data;
 
         const bridgesToCreate: PlacedMachine[] = [];
         for (const p of intersectionPoints) {

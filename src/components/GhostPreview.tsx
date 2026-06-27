@@ -7,7 +7,6 @@ import { checkPlacementCollision } from '@/utils/grid';
 import { getRotatedDimensions, getRotatedPorts } from '@/utils/machineUtils';
 import { GRID_SIZE } from '@/config/constants';
 import { Z_INDEX, machineZ } from '@/config/zIndex';
-import { getMachineMask } from '@/utils/machineUtils';
 import { getGhostArrowPosition } from '@/utils/portPosition';
 import { selectPlacing, selectIsBuildMode } from '@/store/selectors';
 import './GhostPreview.scss';
@@ -99,7 +98,7 @@ export const GhostPreview: React.FC<GhostPreviewProps> = memo(({ hoverPos }) => 
           top: ghostPos.y * GRID_SIZE,
           width: ghostWidth * GRID_SIZE,
           height: ghostHeight * GRID_SIZE,
-          zIndex: machineZ(Z_INDEX.GHOST_BASE, getMachineMask(ghostConfig.id)),
+          zIndex: machineZ(Z_INDEX.GHOST_BASE, ghostConfig.mask.maxMask),
         } as React.CSSProperties}
       />
 

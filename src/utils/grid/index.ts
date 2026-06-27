@@ -1,3 +1,6 @@
+// ── 掩码系统 ──
+export { Mask } from '../mask';
+
 // ── 碰撞检测 / 包围盒 ──
 export { getBoundingBox, checkPlacementCollision, calculateContentDimensions } from './collision';
 export type { BoundingBox } from './collision';
