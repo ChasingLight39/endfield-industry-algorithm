@@ -10,13 +10,13 @@ export const buildConnectionGrid = (
   gridW: number,
   gridH: number,
   portType?: PortType
-): Uint8Array => {
-  const grid = new Uint8Array(gridW * gridH);
+): Mask => {
+  const grid = Mask.Uniform(gridW, gridH, 0);
   for (const c of connections) {
     if (portType && c.portType !== portType) continue;
     for (const p of c.path) {
       if (p.x >= 0 && p.x < gridW && p.y >= 0 && p.y < gridH) {
-        grid[p.y * gridW + p.x] = 1;
+        grid.WriteValue(p.x, p.y, 1);
       }
     }
   }
@@ -34,7 +34,7 @@ export const buildMergedGrid = (
   gridW: number,
   gridH: number,
   portType: PortType
-): Uint8Array => {
+): Mask => {
   const grid = Mask.Uniform(gridW, gridH, 0);
 
   // 机器占用
@@ -56,7 +56,7 @@ export const buildMergedGrid = (
     }
   }
 
-  return grid.data;
+  return grid;
 };
 
 /**
@@ -68,13 +68,13 @@ export const buildExistingCornerGrid = (
   gw: number,
   gh: number,
   portType: PortType
-): Uint8Array => {
-  const grid = new Uint8Array(gw * gh);
+): Mask => {
+  const grid = Mask.Uniform(gw, gh, 0);
   for (const conn of connections) {
     if (conn.portType !== portType) continue;
     for (const cp of getCornerPoints(conn.path, conn.tailFacing, conn.headFacing)) {
       if (cp.x >= 0 && cp.x < gw && cp.y >= 0 && cp.y < gh) {
-        grid[cp.y * gw + cp.x] = 1;
+        grid.WriteValue(cp.x, cp.y, 1);
       }
     }
   }

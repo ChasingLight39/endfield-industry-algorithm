@@ -43,6 +43,11 @@ export class Mask {
     return this.data[y * this.width + x];
   }
 
+  /** 检查 (x, y) 处是否被指定掩码阻挡：(grid[x,y] & mask) !== 0 */
+  IsBlocked(x: number, y: number, mask: number): boolean {
+    return (this.data[y * this.width + x] & mask) !== 0;
+  }
+
   // ── 工厂 ──
 
   /** 创建 w×h 全同值掩码 */

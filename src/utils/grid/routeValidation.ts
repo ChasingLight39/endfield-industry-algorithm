@@ -1,9 +1,10 @@
 import type { Point, Direction, PortType, PlacedMachine, Connection } from '@/types';
-import { sideToDir, oppositeDir } from '@/types';
+import { sideToDir, oppositeDir, DIR_UP, DIR_DOWN, DIR_RIGHT, DIR_LEFT } from '@/types';
 import { trySingleLRoute } from './pathfinding';
 import { computeHeadFacing, dirFromPoints } from './direction';
 import { getInputPortOuterCells } from './port';
 import { getCornerPoints } from './port';
+import { Mask } from '@/utils/mask';
 
 /**
  * portDir 的垂直方向（取两个垂直方向中与目标更接近的那个）
@@ -11,12 +12,12 @@ import { getCornerPoints } from './port';
 const perpendicularDir = (dir: Direction, start: Point, end: Point): Direction => {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
-  if (dir === 0 || dir === 2) {
+  if (dir === DIR_UP || dir === DIR_DOWN) {
     // 垂直端口(上/下)，垂直方向是水平
-    return dx > 0 ? 1 : dx < 0 ? 3 : 1;
+    return dx > 0 ? DIR_RIGHT : dx < 0 ? DIR_LEFT : DIR_RIGHT;
   }
   // 水平端口(左/右)，垂直方向是垂直
-  return dy > 0 ? 2 : dy < 0 ? 0 : 2;
+  return dy > 0 ? DIR_DOWN : dy < 0 ? DIR_UP : DIR_DOWN;
 };
 
 /**
@@ -27,21 +28,22 @@ export const validateRouteConflicts = (
   fullPath: Point[],
   tailFacing: Direction,
   headFacing: Direction,
-  sameConnGrid: Uint8Array,
-  mergedGrid: Uint8Array,
-  existingCornerGrid: Uint8Array,
+  sameConnGrid: Mask,
+  mergedGrid: Mask,
+  existingCornerGrid: Mask,
   bridgeMask: number,
   connMask: number,
-  gw: number,
   options: { isContinuing: boolean; startPos: Point }
 ): boolean => {
   const { isContinuing, startPos } = options;
+  const gw = sameConnGrid.width;
+  const gh = sameConnGrid.height;
 
   // 拐弯点在同类型连线上的检查（自动续接时豁免起点格）
   for (const cp of getCornerPoints(fullPath, tailFacing, headFacing)) {
     if (isContinuing && cp.x === startPos.x && cp.y === startPos.y) continue;
-    if (cp.x >= 0 && cp.x < gw && cp.y >= 0 && cp.y < sameConnGrid.length / gw
-        && sameConnGrid[cp.y * gw + cp.x]) {
+    if (cp.x >= 0 && cp.x < gw && cp.y >= 0 && cp.y < gh
+        && sameConnGrid.get(cp.x, cp.y)) {
       return false;
     }
   }
@@ -49,14 +51,13 @@ export const validateRouteConflicts = (
   // 桥掩码冲突检查 (物理冲突 + 拐弯约束)
   for (const p of fullPath) {
     if (isContinuing && p.x === startPos.x && p.y === startPos.y) continue;
-    const idx = p.y * gw + p.x;
-    if (idx < 0 || idx >= sameConnGrid.length) continue;
-    if (!sameConnGrid[idx]) continue;
+    if (p.x < 0 || p.x >= gw || p.y < 0 || p.y >= gh) continue;
+    if (!sameConnGrid.get(p.x, p.y)) continue;
     // 物理冲突: (bridgeMask & cellMask) 不能超出同类型连线层
-    const cellMask = mergedGrid[idx] | connMask;
+    const cellMask = mergedGrid.get(p.x, p.y) | connMask;
     if ((bridgeMask & cellMask) !== connMask) return false;
     // 拐弯约束: 桥不能放在已有线的拐弯上
-    if (existingCornerGrid[idx]) return false;
+    if (existingCornerGrid.get(p.x, p.y)) return false;
   }
 
   return true;
@@ -115,17 +116,17 @@ export const findRouteForMachine = (
   targetMachine: PlacedMachine,
   targetPortType: PortType,
   lShapeMode: 'auto' | 'perpendicular' | 'same-dir',
-  mergedGrid: Uint8Array,
-  sameConnGrid: Uint8Array,
-  existingCornerGrid: Uint8Array,
+  mergedGrid: Mask,
+  sameConnGrid: Mask,
+  existingCornerGrid: Mask,
   bridgeMask: number,
   connMask: number,
-  gw: number,
   gh: number,
   isContinuing: boolean,
   mouseGridPos: Point
 ): RouteToMachineResult => {
   const inputCells = getInputPortOuterCells(targetMachine, targetPortType);
+  const gw = mergedGrid.width;
 
   // ── 第一轮：尝试找到合法路径 ──
   let bestInput: { pos: Point; side: 'top' | 'right' | 'bottom' | 'left'; path: Point[] } | null = null;
@@ -138,18 +139,18 @@ export const findRouteForMachine = (
 
     // 起终点相同：检查是否能放桥
     if (startPos.x === ic.pos.x && startPos.y === ic.pos.y) {
-      if ((mergedGrid[startPos.y * gw + startPos.x] & connMask) !== 0) continue;
+      if (mergedGrid.IsBlocked(startPos.x, startPos.y, connMask)) continue;
 
       const entryDir = oppositeDir(sideToDir[ic.side]);
       // 非续接时拐弯在同类型线上 → 不放桥（续接首格豁免）
-      if (!isContinuing && sameConnGrid[startPos.y * gw + startPos.x] && tailFacing !== entryDir) {
+      if (!isContinuing && sameConnGrid.get(startPos.x, startPos.y) && tailFacing !== entryDir) {
         continue;
       }
       // 桥掩码冲突检查
-      if (sameConnGrid[startPos.y * gw + startPos.x]) {
-        const cellMask = mergedGrid[startPos.y * gw + startPos.x] | connMask;
+      if (sameConnGrid.get(startPos.x, startPos.y)) {
+        const cellMask = mergedGrid.get(startPos.x, startPos.y) | connMask;
         if ((bridgeMask & cellMask) !== connMask) continue;
-        if (existingCornerGrid[startPos.y * gw + startPos.x]) continue;
+        if (existingCornerGrid.get(startPos.x, startPos.y)) continue;
       }
       bestInput = { pos: ic.pos, side: ic.side, path: [startPos] };
       bestInputDist = 0;
@@ -157,11 +158,11 @@ export const findRouteForMachine = (
     }
 
     // 起点被阻挡 → 跳过
-    if ((mergedGrid[startPos.y * gw + startPos.x] & connMask) !== 0) continue;
+    if (mergedGrid.IsBlocked(startPos.x, startPos.y, connMask)) continue;
 
-    let path = trySingleLRoute(startPos, ic.pos, firstAxis, mergedGrid, gw, gh, connMask);
+    let path = trySingleLRoute(startPos, ic.pos, firstAxis, mergedGrid, connMask);
     if (!path && lShapeMode === 'auto') {
-      path = trySingleLRoute(startPos, ic.pos, perpendicularDir(tailFacing, startPos, ic.pos), mergedGrid, gw, gh, connMask);
+      path = trySingleLRoute(startPos, ic.pos, perpendicularDir(tailFacing, startPos, ic.pos), mergedGrid, connMask);
     }
     if (!path) continue;
 
@@ -169,7 +170,7 @@ export const findRouteForMachine = (
     const entryDir = oppositeDir(sideToDir[ic.side]);
 
     if (!validateRouteConflicts(fullPath, tailFacing, entryDir, sameConnGrid, mergedGrid,
-        existingCornerGrid, bridgeMask, connMask, gw, { isContinuing, startPos })) {
+        existingCornerGrid, bridgeMask, connMask, { isContinuing, startPos })) {
       continue;
     }
 
@@ -186,7 +187,7 @@ export const findRouteForMachine = (
   }
 
   // ── 无合法路径：忽略障碍计算 L 形路径用于视觉预览 ──
-  const emptyGrid = new Uint8Array(gw * gh);
+  const emptyGrid = Mask.Uniform(gw, gh, 0);
   let bestVisual: { path: Point[]; headFacing: Direction; dist: number } | null = null;
 
   for (const ic of inputCells) {
@@ -197,7 +198,7 @@ export const findRouteForMachine = (
     const firstAxis = lShapeMode === 'perpendicular'
       ? perpendicularDir(tailFacing, startPos, ic.pos)
       : tailFacing;
-    const p = trySingleLRoute(startPos, ic.pos, firstAxis, emptyGrid, gw, gh);
+    const p = trySingleLRoute(startPos, ic.pos, firstAxis, emptyGrid);
     if (p) {
       const d = Math.abs(ic.pos.x - mouseGridPos.x) + Math.abs(ic.pos.y - mouseGridPos.y);
       const hf = oppositeDir(sideToDir[ic.side]);
@@ -230,23 +231,23 @@ export const findRouteToGround = (
   tailFacing: Direction,
   targetPos: Point,
   lShapeMode: 'auto' | 'perpendicular' | 'same-dir',
-  mergedGrid: Uint8Array,
-  sameConnGrid: Uint8Array,
-  existingCornerGrid: Uint8Array,
+  mergedGrid: Mask,
+  sameConnGrid: Mask,
+  existingCornerGrid: Mask,
   bridgeMask: number,
   connMask: number,
-  gw: number,
   gh: number,
   isContinuing: boolean
 ): RouteToGroundResult => {
   const firstAxis = lShapeMode === 'perpendicular'
     ? perpendicularDir(tailFacing, startPos, targetPos)
     : tailFacing;
+  const gw = mergedGrid.width;
 
   // 视觉 fallback（忽略障碍的 L 形路径，用于被阻挡时的预览显示）
   const visualFallback = (): RouteToGroundResult => {
-    const emptyGrid = new Uint8Array(gw * gh);
-    const visualPath = trySingleLRoute(startPos, targetPos, firstAxis, emptyGrid, gw, gh);
+    const emptyGrid = Mask.Uniform(gw, gh, 0);
+    const visualPath = trySingleLRoute(startPos, targetPos, firstAxis, emptyGrid);
     if (visualPath) {
       const visualFullPath = [startPos, ...visualPath];
       return { path: visualFullPath, headFacing: computeHeadFacing(visualFullPath, tailFacing), isValid: false };
@@ -255,20 +256,20 @@ export const findRouteToGround = (
   };
 
   // 起点自身被阻挡 → 视觉 fallback（避免跳到斜线）
-  if ((mergedGrid[startPos.y * gw + startPos.x] & connMask) !== 0) {
+  if (mergedGrid.IsBlocked(startPos.x, startPos.y, connMask)) {
     return visualFallback();
   }
 
-  let path = trySingleLRoute(startPos, targetPos, firstAxis, mergedGrid, gw, gh, connMask);
+  let path = trySingleLRoute(startPos, targetPos, firstAxis, mergedGrid, connMask);
   if (!path && lShapeMode === 'auto') {
-    path = trySingleLRoute(startPos, targetPos, perpendicularDir(tailFacing, startPos, targetPos), mergedGrid, gw, gh, connMask);
+    path = trySingleLRoute(startPos, targetPos, perpendicularDir(tailFacing, startPos, targetPos), mergedGrid, connMask);
   }
 
   if (path) {
     const fullPath = [startPos, ...path];
     const headFacing = computeHeadFacing(fullPath, tailFacing);
     const valid = validateRouteConflicts(fullPath, tailFacing, headFacing, sameConnGrid, mergedGrid,
-        existingCornerGrid, bridgeMask, connMask, gw, { isContinuing, startPos });
+        existingCornerGrid, bridgeMask, connMask, { isContinuing, startPos });
     return { path: fullPath, headFacing, isValid: valid };
   }
 

@@ -284,12 +284,12 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
                     }
                 }
 
-                const cornerGrid = new Uint8Array(gridWidth * gridHeight);
+                const cornerGrid = Mask.Uniform(gridWidth, gridHeight, 0);
                 for (const c of connections) {
                     if (c.portType !== pt) continue;
                     for (const cp of getCornerPoints(c.path, c.tailFacing, c.headFacing)) {
                         if (cp.x >= 0 && cp.x < gridWidth && cp.y >= 0 && cp.y < gridHeight) {
-                            cornerGrid[cp.y * gridWidth + cp.x] = 1;
+                            cornerGrid.WriteValue(cp.x, cp.y, 1);
                         }
                     }
                 }
@@ -315,8 +315,6 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
                         fullMask.WriteValue(b.x, b.y, bm);
                     }
                 }
-                const fullMaskGrid = fullMask.data;
-
                 for (const conn of placedConns) {
                     if (conn.portType !== pt) continue;
 
@@ -325,9 +323,9 @@ export const createSelectionSlice: StateCreator<GameState, [], [], SelectionSlic
                         const key = `${p.x},${p.y}`;
                         if (!pointToConns.has(key)) continue;
 
-                        if (cornerGrid[p.y * gridWidth + p.x]) { collision = true; break; }
+                        if (cornerGrid.get(p.x, p.y)) { collision = true; break; }
 
-                        const cellMask = fullMaskGrid[p.y * gridWidth + p.x];
+                        const cellMask = fullMask.get(p.x, p.y);
                         if ((bridgeMask & cellMask) !== connMask) { collision = true; break; }
 
                         intersectionPoints.push(p);

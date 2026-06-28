@@ -25,9 +25,9 @@ interface GridCache {
     gw: number;
     gh: number;
     portType: PortType;
-    mergedGrid: Uint8Array;
-    sameConnGrid: Uint8Array;
-    existingCornerGrid: Uint8Array;
+    mergedGrid: Mask;
+    sameConnGrid: Mask;
+    existingCornerGrid: Mask;
 }
 let _gridCache: GridCache | null = null;
 
@@ -79,9 +79,9 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
         const connMask = portTypeToMask[portType];
         const bridgeMask = portType === 'Solid' ? MASK_SOLID_LOGISTICS : MASK_LIQUID_LOGISTICS;
 
-        let mergedGrid: Uint8Array;
-        let sameConnGrid: Uint8Array;
-        let existingCornerGrid: Uint8Array;
+        let mergedGrid: Mask;
+        let sameConnGrid: Mask;
+        let existingCornerGrid: Mask;
 
         if (_gridCache &&
             _gridCache.machines === machines &&
@@ -124,7 +124,7 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                 const result = findRouteForMachine(
                     startPos, tailFacing, targetMachine, portType, lShapeMode,
                     mergedGrid, sameConnGrid, existingCornerGrid, bridgeMask, connMask,
-                    gw, gh, isContinuing, mouseGridPos
+                    gh, isContinuing, mouseGridPos
                 );
                 if (result.isValid) { bestStartPos = startPos; bestTailFacing = tailFacing; bestResult = result; break; }
                 if (!bestResult) { bestStartPos = startPos; bestTailFacing = tailFacing; bestResult = result; }
@@ -132,7 +132,7 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                 const result = findRouteToGround(
                     startPos, tailFacing, mouseGridPos, lShapeMode,
                     mergedGrid, sameConnGrid, existingCornerGrid, bridgeMask, connMask,
-                    gw, gh, isContinuing
+                    gh, isContinuing
                 );
                 const wrapper = { ...result, targetIsMachine: false };
                 if (result.isValid) { bestStartPos = startPos; bestTailFacing = tailFacing; bestResult = wrapper; break; }
@@ -221,13 +221,13 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
 
         // 已有同类型连线拐弯点 (桥不能放在已有线的拐弯处)
         const { gridWidth: gw2, gridHeight: gh2 } = get();
-        const existingCornerGrid2 = new Uint8Array((gw2 || 100) * (gh2 || 100));
+        const w = gw2 || 100; const h = gh2 || 100;
+        const existingCornerGrid2 = Mask.Uniform(w, h, 0);
         for (const conn of connections) {
             if (conn.portType !== wiringPortType) continue;
             for (const cp of getCornerPoints(conn.path, conn.tailFacing, conn.headFacing)) {
-                const w = gw2 || 100;
-                if (cp.x >= 0 && cp.x < w && cp.y >= 0 && cp.y < (gh2 || 100)) {
-                    existingCornerGrid2[cp.y * w + cp.x] = 1;
+                if (cp.x >= 0 && cp.x < w && cp.y >= 0 && cp.y < h) {
+                    existingCornerGrid2.WriteValue(cp.x, cp.y, 1);
                 }
             }
         }
@@ -238,9 +238,8 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
             if (isContinuing && p.x === path[0].x && p.y === path[0].y) continue;
             const key = `${p.x},${p.y}`;
             if (pointToConns.has(key)) {
-                const w = gw2 || 100;
                 // 交叉点在已有线拐弯处 → 不放桥，不拆分
-                if (existingCornerGrid2[p.y * w + p.x]) continue;
+                if (existingCornerGrid2.get(p.x, p.y)) continue;
                 intersectionPoints.push(p);
             }
         }
@@ -265,11 +264,9 @@ export const createConnectionSlice: StateCreator<GameState, [], [], ConnectionSl
                 if (p.x >= 0 && p.x < w3 && p.y >= 0 && p.y < h3) { fullMask.WriteValue(p.x, p.y, cm); }
             }
         }
-        const fullMaskGrid = fullMask.data;
-
         const bridgesToCreate: PlacedMachine[] = [];
         for (const p of intersectionPoints) {
-            const cellMask = fullMaskGrid[p.y * w3 + p.x];
+            const cellMask = fullMask.get(p.x, p.y);
             // bridgeMask 与 cellMask 的冲突不能超出同类型连线层
             if ((bridgeMask & cellMask) !== connMask2) continue;
             bridgesToCreate.push({

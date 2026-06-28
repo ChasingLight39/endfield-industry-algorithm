@@ -12,7 +12,7 @@ export { buildConnectionGrid, buildMergedGrid, buildExistingCornerGrid } from '.
 export { getVectorFromSide, dirFromPoints, computeHeadFacing } from './direction';
 
 // ── 寻路算法 ──
-export { routeManhattan, trySingleLRoute } from './pathfinding';
+export { trySingleLRoute } from './pathfinding';
 
 // ── 端口 / 连线工具 ──
 export { getCornerPoints, getMachinePortCheckPositions, splitConnectionAt, getPortOuterCells, getInputPortOuterCells, findPortOuterCellAt, findMachineAt, pickClosestPort } from './port';

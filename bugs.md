@@ -38,10 +38,9 @@
 - **文件**: `collision.ts:81`, `occupancy.ts:55`, `connectionSlice.ts:249`, `selectionSlice.ts:234,307,315,353`
 - **修复**: 新增 `Mask.WriteValue(x,y,value)` 方法——单点按位或写入 + 同步更新 maxMask；7 处 `grid.data[...] |=` 全部替换为 `grid.WriteValue(...)`
 
-### 6. buildMergedGrid 创建 Mask 后又丢弃
-- **文件**: `occupancy.ts:33-65`
-- **现象**: 分配完整 Mask 对象 + 调用 MergeInPlace，最后只返回 `.data`（Uint8Array），Mask 包装和 maxMax 计算完全浪费
-- **修复**: 可直接用 `Uint8Array` + 内联循环，或用 `Mask.Uniform` 后调用 `MergeInPlace` 再返回 `.data`（现状也可接受，alloc 开销小）
+### 6. ~~buildMergedGrid 创建 Mask 后又丢弃~~ ✅ 已修复
+- **文件**: `occupancy.ts` 3 个 builder + `pathfinding.ts` + `routeValidation.ts` + `connectionSlice.ts`
+- **修复**: 3 个 builder 改为返回 Mask；下游 `trySingleLRoute`/`validateRouteConflicts`/`findRouteForMachine`/`findRouteToGround` 签名适配（`Uint8Array,gw` → `Mask`）；GridCache 类型适配；`routeManhattan` 删除（无调用方）
 
 ### 7. TryMerge 每台机器分配全网格副本
 - **文件**: `selectionSlice.ts:251-253`
